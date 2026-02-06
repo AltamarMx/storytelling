@@ -136,8 +136,8 @@ def make_wordcloud(highlight_words=None):
             is_hl = highlight_words is None or word in highlight_words
             if is_hl != is_highlight_pass:
                 continue
-            angle = i * 0.75
-            radius = 0.5 + i * 0.35
+            angle = i * 0.85
+            radius = 0.8 + i * 0.45
             frac = (mentions - min_m) / (max_m - min_m)
             color = colors_cloud[i % len(colors_cloud)] if is_hl else DIM
             fig.add_trace(go.Scatter(
