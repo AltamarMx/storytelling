@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Quarto render artifacts (root level)
+/index.html
+/index_files/
+/.quarto/
+
+# Jupyter
+.ipynb_checkpoints/
+*.quarto_ipynb
+
+**/*.quarto_ipynb
