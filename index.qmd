@@ -1,7 +1,11 @@
 ---
-title: "Who Are We?"
-subtitle: "A scrollytelling journey through 150 changemakers"
+title: "¿Quiénes Somos?"
+subtitle: "Un viaje de scrollytelling a través de 150 agentes de cambio"
 jupyter: python3
+format:
+  closeread-html:
+    cr-section:
+      layout: "overlay-center"
 ---
 
 ```{python}
@@ -70,77 +74,77 @@ def styled(fig, title=""):
 # ============================================================
 
 gender_df = pd.DataFrame({
-    "Gender": ["Female", "Male", "Non-binary"],
+    "Gender": ["Mujeres", "Hombres", "No binario"],
     "Count": [68, 62, 20],
-    "Color": ["#f472b6", "#38bdf8", "#a78bfa"]
+    "Color": ["#fbbf24", "#38bdf8", "#a78bfa"]
 })
-gender_df["Pct"] = (gender_df["Count"] / 150 * 100).round(1)
+gender_df["Pct"] = (gender_df["Count"] / 150 * 100).round(0).astype(int)
 
 career_df = pd.DataFrame({
-    "Career": ["Software Engineering", "Data Science", "Environmental Science",
-               "Design / UX", "Marketing & Comms", "Business & Management",
-               "Education", "Public Policy", "Healthcare",
-               "Art & Creative", "Agriculture", "Journalism"],
+    "Career": ["Ingeniería de Software", "Ciencia de Datos", "Ciencias Ambientales",
+               "Diseño / UX", "Marketing y Comunicación", "Negocios y Gestión",
+               "Educación", "Políticas Públicas", "Salud",
+               "Arte y Creatividad", "Agricultura", "Periodismo"],
     "Count": [28, 24, 18, 16, 14, 12, 10, 8, 6, 5, 5, 4]
 })
 career_colors = ["#818cf8","#818cf8","#34d399","#f472b6","#fbbf24",
                  "#38bdf8","#fb923c","#a78bfa","#f87171","#c084fc","#86efac","#67e8f9"]
 
 python_df = pd.DataFrame({
-    "Level": ["Expert", "Advanced", "Intermediate", "Beginner"],
+    "Level": ["Experto", "Avanzado", "Intermedio", "Principiante"],
     "Count": [20, 40, 55, 35],
     "Color": ["#15803d", "#22c55e", "#4ade80", "#86efac"],
 })
 python_df["Pct"] = (python_df["Count"] / 150 * 100).round(0).astype(int)
 
 sdg_df = pd.DataFrame({
-    "SDG": ["13: Climate Action", "4: Quality Education", "6: Clean Water",
-            "7: Affordable Energy", "3: Good Health", "5: Gender Equality",
-            "11: Sustainable Cities", "2: Zero Hunger", "14: Life Below Water",
-            "15: Life on Land", "1: No Poverty", "12: Responsible Consumption"],
+    "SDG": ["13: Acción por el Clima", "4: Educación de Calidad", "6: Agua Limpia",
+            "7: Energía Asequible", "3: Salud y Bienestar", "5: Igualdad de Género",
+            "11: Ciudades Sostenibles", "2: Hambre Cero", "14: Vida Submarina",
+            "15: Vida de Ecosistemas Terrestres", "1: Fin de la Pobreza", "12: Consumo Responsable"],
     "Votes": [32, 22, 18, 15, 14, 12, 10, 8, 7, 6, 3, 3],
     "Color": ["#3F7E44","#C5192D","#26BDE2","#FCC30B","#4C9F38","#FF3A21",
               "#FD9D24","#DDA63A","#0A97D9","#56C02B","#E5243B","#BF8B2E"],
 })
 
 bev_df = pd.DataFrame({
-    "Drink": ["Water", "Coffee", "Tea", "Soda", "Juice", "Energy"],
+    "Drink": ["Agua", "Café", "Té", "Refresco", "Jugo", "Energizante"],
     "Liters": [2100, 525, 300, 150, 120, 45],
     "PerPerson": [14.0, 3.5, 2.0, 1.0, 0.8, 0.3],
     "Color": ["#38bdf8", "#92400e", "#65a30d", "#dc2626", "#f59e0b", "#10b981"]
 })
 
 transport_df = pd.DataFrame({
-    "Mode": ["Car", "Bus & Transit", "Walking", "Bicycle"],
+    "Mode": ["Auto", "Bus y Transporte", "Caminando", "Bicicleta"],
     "TotalKm": [6750, 4500, 2250, 1500],
     "PerPerson": [45, 30, 15, 10],
     "Color": ["#ef4444", "#f59e0b", "#22c55e", "#3b82f6"]
 })
 
 words_data = [
-    ("Future",48),("Hope",44),("Action",42),("Together",40),("Planet",38),
-    ("Change",36),("Justice",34),("Climate",33),("Green",31),("Equality",30),
-    ("Water",28),("Education",27),("Innovation",26),("Community",25),
-    ("Sustainability",24),("Clean",22),("Health",21),("Peace",20),("Nature",19),
-    ("Responsibility",18),("Resilience",17),("Energy",16),("Dignity",15),
-    ("Oceans",14),("Forests",14),("Empowerment",13),("Biodiversity",12),
-    ("Circular",11),("Equity",11),("Solidarity",10),
+    ("Futuro",48),("Esperanza",44),("Acción",42),("Juntos",40),("Planeta",38),
+    ("Cambio",36),("Justicia",34),("Clima",33),("Verde",31),("Igualdad",30),
+    ("Agua",28),("Educación",27),("Innovación",26),("Comunidad",25),
+    ("Sostenibilidad",24),("Limpio",22),("Salud",21),("Paz",20),("Naturaleza",19),
+    ("Responsabilidad",18),("Resiliencia",17),("Energía",16),("Dignidad",15),
+    ("Océanos",14),("Bosques",14),("Empoderamiento",13),("Biodiversidad",12),
+    ("Circular",11),("Equidad",11),("Solidaridad",10),
 ]
 
 energy_df = pd.DataFrame({
-    "Source": ["Solar", "Wind", "Hydro", "Geothermal", "Biomass"],
+    "Source": ["Solar", "Eólica", "Hidráulica", "Geotérmica", "Biomasa"],
     "Votes": [52, 38, 28, 18, 14],
     "Color": ["#fbbf24", "#93c5fd", "#38bdf8", "#f87171", "#86efac"]
 })
 
 animal_df = pd.DataFrame({
-    "Animal": ["Sloth", "Owl", "Golden Retriever", "Cat", "Parrot", "Penguin"],
+    "Animal": ["Perezoso", "Búho", "Golden Retriever", "Gato", "Loro", "Pingüino"],
     "Votes": [35, 32, 28, 25, 18, 12],
     "Color": ["#a78bfa", "#818cf8", "#fbbf24", "#f97316", "#22d3ee", "#e2e8f0"]
 })
 
 plant_df = pd.DataFrame({
-    "Range": ["0 (Plant Whisperer)", "1-3 plants", "4-7 plants", "8+ plants", "Lost count"],
+    "Range": ["0 (Encantador de plantas)", "1-3 plantas", "4-7 plantas", "8+ plantas", "Perdí la cuenta"],
     "Count": [22, 45, 38, 25, 20],
     "Color": ["#22c55e", "#86efac", "#fbbf24", "#f97316", "#ef4444"],
 })
@@ -153,9 +157,9 @@ plant_df = pd.DataFrame({
 
 :::{#cr-hero}
 
-# Who Are We?
+# ¿Quiénes Somos?
 
-*A data journey through 150 changemakers*
+*Un viaje de datos a través de 150 agentes de cambio*
 
 :::
 
@@ -164,45 +168,89 @@ plant_df = pd.DataFrame({
 
 :::{.cr-section layout="overlay-center"}
 
-We are **150 people** organized in **50 teams** of 3, united by one mission: building a more sustainable world. @cr-bignum
+@cr-bignum
 
-But numbers alone don't tell our story. Let's scroll through who we really are. @cr-bignum
+Somos **150 personas** organizadas en **50 equipos** de 3, unidas por una misión: construir un mundo más sostenible. 
+
+Pero los números por sí solos no cuentan nuestra historia. Desplacémonos para descubrir quiénes somos realmente. 
 
 :::{#cr-bignum}
 
 # 150
 
-*people · 50 teams · 1 mission*
+*personas · 50 equipos · 1 misión*
 
 :::
 
 :::
 
 
-## Our Voices
+## Nuestras Voces
 
 :::{.cr-section}
 
-What does our group look like? @cr-gender
+¿Cómo se ve nuestro grupo?
 
-**68 women (45.3%)** form the largest group. @cr-gender
+[**68 mujeres (45.3%)**]{style="color:#fbbf24"} forman el grupo más grande. @cr-gender-mujeres
 
-**62 men (41.3%)** are close behind. @cr-gender
+[**62 hombres (41.3%)**]{style="color:#38bdf8"} les siguen de cerca. @cr-gender-hombres
 
-And **20 non-binary people (13.3%)** enrich our perspectives. @cr-gender
+Y [**20 personas no binarias (13.3%)**]{style="color:#a78bfa"} enriquecen nuestras perspectivas. @cr-gender-nb
 
-:::{#cr-gender}
+:::{#cr-gender-mujeres}
+```{python}
+#| echo: false
+DIM = "#334155"
+fig = go.Figure()
+colors_m = ["#fbbf24", DIM, DIM]
+fig.add_trace(go.Bar(
+    y=gender_df["Gender"], x=gender_df["Count"], orientation="h",
+    marker_color=colors_m,
+    text=[f"{c} ({p}%)" for c, p in zip(gender_df["Count"], gender_df["Pct"])],
+    textposition="inside",
+    insidetextanchor="middle",
+    textfont=dict(family=FONT, size=14, color="#f8fafc"),
+))
+styled(fig, "Composición por Género")
+fig.update_layout(width=350, yaxis=dict(autorange="reversed"))
+fig.show()
+```
+:::
+
+:::{#cr-gender-hombres}
 ```{python}
 #| echo: false
 fig = go.Figure()
+colors_h = [DIM, "#38bdf8", DIM]
 fig.add_trace(go.Bar(
     y=gender_df["Gender"], x=gender_df["Count"], orientation="h",
-    marker_color=gender_df["Color"],
+    marker_color=colors_h,
     text=[f"{c} ({p}%)" for c, p in zip(gender_df["Count"], gender_df["Pct"])],
-    textposition="outside",
+    textposition="inside",
+    insidetextanchor="middle",
+    textfont=dict(family=FONT, size=14, color="#f8fafc"),
 ))
-styled(fig, "Gender Composition")
-fig.update_layout(yaxis=dict(autorange="reversed"))
+styled(fig, "Composición por Género")
+fig.update_layout(width=350, yaxis=dict(autorange="reversed"))
+fig.show()
+```
+:::
+
+:::{#cr-gender-nb}
+```{python}
+#| echo: false
+fig = go.Figure()
+colors_nb = [DIM, DIM, "#a78bfa"]
+fig.add_trace(go.Bar(
+    y=gender_df["Gender"], x=gender_df["Count"], orientation="h",
+    marker_color=colors_nb,
+    text=[f"{c} ({p}%)" for c, p in zip(gender_df["Count"], gender_df["Pct"])],
+    textposition="inside",
+    insidetextanchor="middle",
+    textfont=dict(family=FONT, size=14, color="#f8fafc"),
+))
+styled(fig, "Composición por Género")
+fig.update_layout(width=350, yaxis=dict(autorange="reversed"))
 fig.show()
 ```
 :::
@@ -210,17 +258,17 @@ fig.show()
 :::
 
 
-## What Do We Do?
+## ¿A Qué Nos Dedicamos?
 
 :::{.cr-section}
 
-We come from **12 different career fields**. Sustainability needs every discipline. @cr-careers
+Venimos de **12 campos profesionales diferentes**. La sostenibilidad necesita de todas las disciplinas. @cr-careers
 
-**Software Engineers (28)** and **Data Scientists (24)** lead the pack. @cr-careers
+**Ingenieros de Software (28)** y **Científicos de Datos (24)** lideran el grupo. @cr-careers
 
-**Environmental Scientists (18)**, **Designers (16)**, and **Marketers (14)** keep us grounded. @cr-careers
+**Científicos Ambientales (18)**, **Diseñadores (16)** y **Comunicadores (14)** nos mantienen con los pies en la tierra. @cr-careers
 
-From **Public Policy** to **Agriculture** to **Journalism** --- every voice matters. @cr-careers
+Desde **Políticas Públicas** hasta **Agricultura** y **Periodismo** --- cada voz importa. @cr-careers
 
 :::{#cr-careers}
 ```{python}
@@ -234,7 +282,7 @@ fig.add_trace(go.Bar(
     marker_color=sorted_colors,
     text=sorted_career["Count"], textposition="outside",
 ))
-styled(fig, "12 Career Fields")
+styled(fig, "12 Campos Profesionales")
 fig.show()
 ```
 :::
@@ -242,17 +290,17 @@ fig.show()
 :::
 
 
-## Python Knowledge
+## Conocimiento de Python
 
 :::{.cr-section}
 
-In the age of data, how well do we speak **Python**? @cr-python
+En la era de los datos, ¿qué tan bien hablamos **Python**? @cr-python
 
-**35 Beginners (23%)** --- `print("hello world")` never felt so good. @cr-python
+**35 Principiantes (23%)** --- `print("hola mundo")` nunca se sintió tan bien. @cr-python
 
-**55 Intermediates (37%)** --- the largest group! @cr-python
+**55 Intermedios (37%)** --- ¡el grupo más grande! @cr-python
 
-**40 Advanced (27%)** and **20 Experts (13%)** --- together **77% are Intermediate or above**. @cr-python
+**40 Avanzados (27%)** y **20 Expertos (13%)** --- juntos, **el 77% son de nivel Intermedio o superior**. @cr-python
 
 :::{#cr-python}
 ```{python}
@@ -264,7 +312,7 @@ fig.add_trace(go.Bar(
     text=[f"{c} ({p}%)" for c, p in zip(python_df["Count"], python_df["Pct"])],
     textposition="outside",
 ))
-styled(fig, "Python Proficiency")
+styled(fig, "Dominio de Python")
 fig.show()
 ```
 :::
@@ -272,17 +320,17 @@ fig.show()
 :::
 
 
-## Favorite SDGs
+## ODS Favoritos
 
 :::{.cr-section layout="overlay-center"}
 
-We asked: **"Which SDG is closest to your heart?"** @cr-sdg
+Preguntamos: **"¿Cuál ODS está más cerca de tu corazón?"** @cr-sdg
 
-**SDG 13 --- Climate Action** won with 32 votes. @cr-sdg
+**ODS 13 --- Acción por el Clima** ganó con 32 votos. @cr-sdg
 
-**Quality Education (22)** and **Clean Water (18)** round out the top 3. @cr-sdg
+**Educación de Calidad (22)** y **Agua Limpia (18)** completan el top 3. @cr-sdg
 
-Our passions span the entire 2030 Agenda. @cr-sdg
+Nuestras pasiones abarcan toda la Agenda 2030. @cr-sdg
 
 :::{#cr-sdg}
 ```{python}
@@ -291,11 +339,11 @@ fig = go.Figure()
 fig.add_trace(go.Treemap(
     labels=sdg_df["SDG"], parents=[""] * len(sdg_df),
     values=sdg_df["Votes"], marker_colors=sdg_df["Color"],
-    texttemplate="<b>%{label}</b><br>%{value} votes",
+    texttemplate="<b>%{label}</b><br>%{value} votos",
     textfont=dict(family=FONT, size=14),
     pathbar=dict(textfont=dict(family=FONT, size=12)),
 ))
-styled(fig, "Favorite SDGs — Sized by Votes")
+styled(fig, "ODS Favoritos — Tamaño por Votos")
 fig.show()
 ```
 :::
@@ -303,20 +351,20 @@ fig.show()
 :::
 
 
-## What Fuels Us?
+## ¿Qué Nos Alimenta?
 
 :::{.cr-section}
 
-**What do we drink every week?** @cr-drinks
+**¿Qué bebemos cada semana?** @cr-drinks
 
-**2,100 liters of water** --- enough to fill **10 bathtubs**! @cr-drinks
+**2,100 litros de agua** --- ¡suficiente para llenar **10 bañeras**! @cr-drinks
 
-**525 liters of coffee** --- 3.5 liters per person, roughly **5 cups a day**. @cr-drinks
+**525 litros de café** --- 3.5 litros por persona, aproximadamente **5 tazas al día**. @cr-drinks
 
-Plus **300L tea**, **150L soda**, **120L juice**, and **45L energy drinks**. @cr-drinks
+Más **300L de té**, **150L de refresco**, **120L de jugo** y **45L de bebidas energizantes**. @cr-drinks
 
 ::::{focus-on="cr-drinks"}
-**Fun fact:** Our weekly water bottles lined up would stretch 2.1 km --- 20 football fields!
+**Dato curioso:** ¡Nuestras botellas de agua semanales alineadas se extenderían 2.1 km --- 20 canchas de fútbol!
 ::::
 
 :::{#cr-drinks}
@@ -329,7 +377,7 @@ fig.add_trace(go.Bar(
     text=[f"{l:,}L" for l in bev_df["Liters"]],
     textposition="outside",
 ))
-styled(fig, "Weekly Beverages (150 people)")
+styled(fig, "Bebidas Semanales (150 personas)")
 fig.show()
 ```
 :::
@@ -337,20 +385,20 @@ fig.show()
 :::
 
 
-## How Do We Move?
+## ¿Cómo Nos Movemos?
 
 :::{.cr-section}
 
-Every week we cover **15,000 km** combined --- a third of the way around Earth! @cr-transport
+Cada semana recorremos **15,000 km** combinados --- ¡un tercio de la vuelta al mundo! @cr-transport
 
-**Cars** lead at **6,750 km/week** (45%). @cr-transport
+Los **autos** lideran con **6,750 km/semana** (45%). @cr-transport
 
-**Buses** at **4,500 km** (30%). @cr-transport
+**Buses** con **4,500 km** (30%). @cr-transport
 
-**2,250 km walked** and **1,500 km biked** --- 25 km zero-emission per person. @cr-transport
+**2,250 km caminando** y **1,500 km en bicicleta** --- 25 km de emisiones cero por persona. @cr-transport
 
 ::::{focus-on="cr-transport"}
-**Challenge:** Switch car trips under 5 km to biking and save **820 kg CO2/week**!
+**Reto:** ¡Cambia los viajes en auto de menos de 5 km por bicicleta y ahorra **820 kg de CO2/semana**!
 ::::
 
 :::{#cr-transport}
@@ -365,8 +413,8 @@ fig.add_trace(go.Pie(
     insidetextfont=dict(family=FONT, size=13, color="#f8fafc"),
     outsidetextfont=dict(family=FONT, size=13, color=TEXT),
 ))
-styled(fig, "Weekly Travel: 15,000 km")
-fig.update_layout(annotations=[dict(text="<b>15,000</b><br>km/week",
+styled(fig, "Viajes Semanales: 15,000 km")
+fig.update_layout(annotations=[dict(text="<b>15,000</b><br>km/semana",
                                     x=0.5, y=0.5, showarrow=False,
                                     font=dict(family=TITLE_FONT, color=ACCENT, size=18))])
 fig.show()
@@ -376,17 +424,17 @@ fig.show()
 :::
 
 
-## Three Words About the SDGs
+## Tres Palabras Sobre los ODS
 
 :::{.cr-section layout="overlay-center"}
 
-**"Name three words when you think about the SDGs."** @cr-words
+**"Nombra tres palabras cuando piensas en los ODS."** @cr-words
 
-**Future**, **Hope**, and **Action** dominated. @cr-words
+**Futuro**, **Esperanza** y **Acción** dominaron. @cr-words
 
-**Together**, **Planet**, and **Change** --- a shared journey toward transformation. @cr-words
+**Juntos**, **Planeta** y **Cambio** --- un viaje compartido hacia la transformación. @cr-words
 
-**Innovation** and **Community** --- solutions from collective creativity. @cr-words
+**Innovación** y **Comunidad** --- soluciones desde la creatividad colectiva. @cr-words
 
 :::{#cr-words}
 ```{python}
@@ -410,11 +458,11 @@ for i, (word, mentions) in enumerate(words_data):
         y=[radius * math.sin(angle) * 0.7],
         mode="text", text=[word],
         textfont=dict(family=TITLE_FONT, size=10 + frac * 28, color=colors_cloud[i % len(colors_cloud)]),
-        hovertemplate=f"{word}: {mentions} mentions<extra></extra>",
+        hovertemplate=f"{word}: {mentions} menciones<extra></extra>",
         showlegend=False,
     ))
 
-styled(fig, "Words Sized by Frequency")
+styled(fig, "Palabras por Frecuencia")
 fig.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x"))
 fig.show()
 ```
@@ -423,17 +471,17 @@ fig.show()
 :::
 
 
-## If You Were a Renewable Energy...
+## Si Fueras una Energía Renovable...
 
 :::{.cr-section}
 
-**"If you could be a renewable energy source?"** @cr-energy
+**"¿Si pudieras ser una fuente de energía renovable?"** @cr-energy
 
-**Solar (52)** --- bright, warm, everywhere. @cr-energy
+**Solar (52)** --- brillante, cálida, en todas partes. @cr-energy
 
-**Wind (38)** --- free-spirited, impossible to contain. @cr-energy
+**Eólica (38)** --- libre, imposible de contener. @cr-energy
 
-**Geothermal (18)** --- calm on the surface, fire underneath. **Biomass (14)** --- fueled by leftovers. @cr-energy
+**Geotérmica (18)** --- calma en la superficie, fuego por dentro. **Biomasa (14)** --- alimentada por sobras. @cr-energy
 
 :::{#cr-energy}
 ```{python}
@@ -448,7 +496,7 @@ fig.add_trace(go.Scatter(
     textposition="middle center",
     textfont=dict(family=TITLE_FONT, size=16, color="#f8fafc"),
 ))
-styled(fig, "Your Renewable Alter Ego")
+styled(fig, "Tu Alter Ego Renovable")
 fig.show()
 ```
 :::
@@ -456,17 +504,17 @@ fig.show()
 :::
 
 
-## Spirit Animal in Meetings
+## Animal Espiritual en Reuniones
 
 :::{.cr-section}
 
-**"What's your spirit animal in team meetings?"** @cr-animals
+**"¿Cuál es tu animal espiritual en reuniones de equipo?"** @cr-animals
 
-**Sloth (35)** --- slow, steady, occasionally asleep with eyes open. @cr-animals
+**Perezoso (35)** --- lento, constante, ocasionalmente dormido con los ojos abiertos. @cr-animals
 
-**Owl (32)** --- wise observers. **Golden Retriever (28)** --- SO HAPPY to be here. @cr-animals
+**Búho (32)** --- observadores sabios. **Golden Retriever (28)** --- TAN FELIZ de estar aquí. @cr-animals
 
-**Cat (25)** --- judges everyone. **Parrot (18)** --- repeats the manager. **Penguin (12)** --- formal but slides around. @cr-animals
+**Gato (25)** --- juzga a todos. **Loro (18)** --- repite al jefe. **Pingüino (12)** --- formal pero se desliza por todos lados. @cr-animals
 
 :::{#cr-animals}
 ```{python}
@@ -480,8 +528,8 @@ fig.add_trace(go.Pie(
     insidetextfont=dict(family=FONT, size=13, color="#f8fafc"),
     outsidetextfont=dict(family=FONT, size=13, color=TEXT),
 ))
-styled(fig, "Meeting Spirit Animals")
-fig.update_layout(annotations=[dict(text="<b>150</b><br>people",
+styled(fig, "Animales Espirituales de Reunión")
+fig.update_layout(annotations=[dict(text="<b>150</b><br>personas",
                                     x=0.5, y=0.5, showarrow=False,
                                     font=dict(family=TITLE_FONT, color=ACCENT, size=18))])
 fig.show()
@@ -491,17 +539,17 @@ fig.show()
 :::
 
 
-## The Great Plant Census
+## El Gran Censo de Plantas
 
 :::{.cr-section}
 
-**"How many houseplants have you accidentally composted?"** @cr-plants
+**"¿Cuántas plantas de interior has compostado accidentalmente?"** @cr-plants
 
-Only **22 (15%)** claim zero casualties. @cr-plants
+Solo **22 (15%)** afirman tener cero bajas. @cr-plants
 
-**45 people** lost **1-3 plants** --- the biggest group. @cr-plants
+**45 personas** perdieron **1-3 plantas** --- el grupo más grande. @cr-plants
 
-**38** lost 4-7, **25** confessed to 8+, and **20** said "lost count." Total: **~487 plants**. @cr-plants
+**38** perdieron 4-7, **25** confesaron 8+, y **20** dijeron "perdí la cuenta." Total: **~487 plantas**. @cr-plants
 
 :::{#cr-plants}
 ```{python}
@@ -512,7 +560,7 @@ fig.add_trace(go.Bar(
     marker_color=plant_df["Color"],
     text=plant_df["Count"], textposition="outside",
 ))
-styled(fig, "Houseplant Casualties")
+styled(fig, "Bajas de Plantas de Interior")
 fig.update_layout(yaxis=dict(autorange="reversed"))
 fig.show()
 ```
@@ -525,21 +573,21 @@ fig.show()
 
 @cr-closing
 
-That's us. **150 people. 50 teams.** @cr-closing
+Esos somos nosotros. **150 personas. 50 equipos.** @cr-closing
 
-From coffee to kilometers, from SDGs to fallen houseplants --- every data point tells our story. @cr-closing
+Del café a los kilómetros, de los ODS a las plantas caídas --- cada dato cuenta nuestra historia. @cr-closing
 
 :::{focus-on="cr-closing"}
-**Now let's get to work --- the future won't build itself.**
+**Ahora manos a la obra --- el futuro no se construye solo.**
 
-*(...but at least we have 525 liters of coffee to help.)*
+*(...pero al menos tenemos 525 litros de café para ayudar.)*
 :::
 
 :::{#cr-closing}
 
-## This Is Us.
+## Estos Somos Nosotros.
 
-*150 people · 50 teams · Infinite potential.*
+*150 personas · 50 equipos · Potencial infinito.*
 
 :::
 
