@@ -28,8 +28,9 @@ MUTED = "#94a3b8"
 GRID = "rgba(148, 163, 184, 0.12)"
 FONT = "Inter, system-ui, sans-serif"
 TITLE_FONT = "Space Grotesk, system-ui, sans-serif"
-
 ACCENT = "#38bdf8"
+DIM = "#334155"
+SHOW = {"displayModeBar": False}
 
 def styled(fig, title=""):
     fig.update_layout(
@@ -59,7 +60,6 @@ def styled(fig, title=""):
             font_color=TEXT, bordercolor=GRID,
         ),
     )
-    # Style text on all traces
     for trace in fig.data:
         if hasattr(trace, "textfont") and not isinstance(trace, go.Scatter):
             trace.textfont = dict(family=FONT, size=14, color="#f8fafc")
@@ -68,6 +68,112 @@ def styled(fig, title=""):
         if hasattr(trace, "outsidetextfont"):
             trace.outsidetextfont = dict(family=FONT, size=14, color=TEXT)
     return fig
+
+def hl(names, colors, highlight):
+    """Return colors: original for names in highlight, DIM for rest."""
+    return [c if n in highlight else DIM for n, c in zip(names, colors)]
+
+# ---------- chart helpers ----------
+
+def make_hbar(df, y_col, x_col, colors, text_vals, title):
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        y=df[y_col], x=df[x_col], orientation="h",
+        marker_color=colors, text=text_vals,
+        textposition="inside", insidetextanchor="middle",
+        textfont=dict(family=FONT, size=14, color="#f8fafc"),
+    ))
+    styled(fig, title)
+    fig.update_layout(width=350, yaxis=dict(autorange="reversed"))
+    fig.show(config=SHOW)
+
+def make_vbar(df, x_col, y_col, colors, text_vals, title):
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=df[x_col], y=df[y_col],
+        marker_color=colors, text=text_vals,
+        textposition="outside",
+        textfont=dict(family=FONT, size=14, color="#f8fafc"),
+    ))
+    styled(fig, title)
+    fig.update_layout(width=350)
+    fig.show(config=SHOW)
+
+def make_pie(df, label_col, value_col, colors, title,
+             center="", tmpl="<b>%{label}</b><br>%{value:,}"):
+    fig = go.Figure()
+    fig.add_trace(go.Pie(
+        labels=df[label_col], values=df[value_col],
+        marker_colors=colors, hole=0.5, sort=False,
+        texttemplate=tmpl,
+        textfont=dict(family=FONT, size=14, color="#f8fafc"),
+        insidetextfont=dict(family=FONT, size=13, color="#f8fafc"),
+        outsidetextfont=dict(family=FONT, size=13, color=TEXT),
+    ))
+    styled(fig, title)
+    if center:
+        fig.update_layout(annotations=[dict(
+            text=center, x=0.5, y=0.5, showarrow=False,
+            font=dict(family=TITLE_FONT, color=ACCENT, size=18))])
+    fig.update_layout(width=350)
+    fig.show(config=SHOW)
+
+def make_treemap(df, label_col, value_col, colors, title):
+    fig = go.Figure()
+    fig.add_trace(go.Treemap(
+        labels=df[label_col], parents=[""] * len(df),
+        values=df[value_col], marker_colors=colors,
+        texttemplate="<b>%{label}</b><br>%{value} votos",
+        textfont=dict(family=FONT, size=14),
+        pathbar=dict(textfont=dict(family=FONT, size=12)),
+    ))
+    styled(fig, title)
+    fig.update_layout(width=350)
+    fig.show(config=SHOW)
+
+colors_cloud = ["#38bdf8","#f472b6","#a78bfa","#34d399","#fbbf24","#818cf8",
+                "#22d3ee","#fb923c","#86efac","#f472b6","#38bdf8","#fbbf24",
+                "#a78bfa","#34d399","#818cf8","#22d3ee","#f87171","#c084fc",
+                "#86efac","#fb923c","#67e8f9","#fbbf24","#f472b6","#38bdf8",
+                "#34d399","#a78bfa","#818cf8","#fbbf24","#22d3ee","#f87171"]
+
+def make_wordcloud(highlight_words=None):
+    fig = go.Figure()
+    max_m = max(m for _, m in words_data)
+    min_m = min(m for _, m in words_data)
+    for i, (word, mentions) in enumerate(words_data):
+        angle = i * 0.75
+        radius = 0.5 + i * 0.35
+        frac = (mentions - min_m) / (max_m - min_m)
+        c = colors_cloud[i % len(colors_cloud)]
+        color = c if (highlight_words is None or word in highlight_words) else DIM
+        fig.add_trace(go.Scatter(
+            x=[radius * math.cos(angle)],
+            y=[radius * math.sin(angle) * 0.7],
+            mode="text", text=[word],
+            textfont=dict(family=TITLE_FONT, size=10 + frac * 28, color=color),
+            hovertemplate=f"{word}: {mentions} menciones<extra></extra>",
+            showlegend=False,
+        ))
+    styled(fig, "Palabras por Frecuencia")
+    fig.update_layout(width=350, xaxis=dict(visible=False),
+                      yaxis=dict(visible=False, scaleanchor="x"))
+    fig.show(config=SHOW)
+
+def make_bubble(df, x_col, y_col, colors, title):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df[x_col], y=df[y_col],
+        mode="markers+text",
+        marker=dict(size=df[y_col] * 1.8, color=colors,
+                    opacity=0.75, line=dict(color="rgba(148,163,184,0.3)", width=1)),
+        text=[f"<b>{v}</b>" for v in df[y_col]],
+        textposition="middle center",
+        textfont=dict(family=TITLE_FONT, size=16, color="#f8fafc"),
+    ))
+    styled(fig, title)
+    fig.update_layout(width=350)
+    fig.show(config=SHOW)
 
 # ============================================================
 # DATA
@@ -79,6 +185,7 @@ gender_df = pd.DataFrame({
     "Color": ["#fbbf24", "#38bdf8", "#a78bfa"]
 })
 gender_df["Pct"] = (gender_df["Count"] / 150 * 100).round(0).astype(int)
+gender_df["Label"] = [f"{c} ({p}%)" for c, p in zip(gender_df["Count"], gender_df["Pct"])]
 
 career_df = pd.DataFrame({
     "Career": ["Ingeniería de Software", "Ciencia de Datos", "Ciencias Ambientales",
@@ -89,13 +196,16 @@ career_df = pd.DataFrame({
 })
 career_colors = ["#818cf8","#818cf8","#34d399","#f472b6","#fbbf24",
                  "#38bdf8","#fb923c","#a78bfa","#f87171","#c084fc","#86efac","#67e8f9"]
+career_color_map = dict(zip(career_df["Career"], career_colors))
+sorted_career = career_df.sort_values("Count", ascending=True)
 
 python_df = pd.DataFrame({
-    "Level": ["Experto", "Avanzado", "Intermedio", "Principiante"],
-    "Count": [20, 40, 55, 35],
-    "Color": ["#15803d", "#22c55e", "#4ade80", "#86efac"],
+    "Level": ["Experto", "Avanzado", "Intermedio", "Principiante", "No sabe"],
+    "Count": [15, 32, 45, 28, 30],
+    "Color": ["#34d399", "#22c55e", "#4ade80", "#86efac", "#f87171"],
 })
 python_df["Pct"] = (python_df["Count"] / 150 * 100).round(0).astype(int)
+python_df["Label"] = [f"{c} ({p}%)" for c, p in zip(python_df["Count"], python_df["Pct"])]
 
 sdg_df = pd.DataFrame({
     "SDG": ["13: Acción por el Clima", "4: Educación de Calidad", "6: Agua Limpia",
@@ -111,7 +221,7 @@ bev_df = pd.DataFrame({
     "Drink": ["Agua", "Café", "Té", "Refresco", "Jugo", "Energizante"],
     "Liters": [2100, 525, 300, 150, 120, 45],
     "PerPerson": [14.0, 3.5, 2.0, 1.0, 0.8, 0.3],
-    "Color": ["#38bdf8", "#92400e", "#65a30d", "#dc2626", "#f59e0b", "#10b981"]
+    "Color": ["#38bdf8", "#d97706", "#84cc16", "#ef4444", "#f59e0b", "#10b981"]
 })
 
 transport_df = pd.DataFrame({
@@ -170,9 +280,9 @@ plant_df = pd.DataFrame({
 
 @cr-bignum
 
-Somos **150 personas** organizadas en **50 equipos** de 3, unidas por una misión: construir un mundo más sostenible. 
+Somos **150 personas** organizadas en **50 equipos** de 3, unidas por una misión: construir un mundo más sostenible.
 
-Pero los números por sí solos no cuentan nuestra historia. Desplacémonos para descubrir quiénes somos realmente. 
+Pero los números por sí solos no cuentan nuestra historia. Desplacémonos para descubrir quiénes somos realmente.
 
 :::{#cr-bignum}
 
@@ -191,67 +301,36 @@ Pero los números por sí solos no cuentan nuestra historia. Desplacémonos para
 
 ¿Cómo se ve nuestro grupo?
 
-[**68 mujeres (45.3%)**]{style="color:#fbbf24"} forman el grupo más grande. @cr-gender-mujeres
+[**68 mujeres (45%)**]{style="color:#fbbf24"} forman el grupo más grande. @cr-gender-mujeres
 
-[**62 hombres (41.3%)**]{style="color:#38bdf8"} les siguen de cerca. @cr-gender-hombres
+[**62 hombres (41%)**]{style="color:#38bdf8"} les siguen de cerca. @cr-gender-hombres
 
-Y [**20 personas no binarias (13.3%)**]{style="color:#a78bfa"} enriquecen nuestras perspectivas. @cr-gender-nb
+Y [**20 personas no binarias (13%)**]{style="color:#a78bfa"} enriquecen nuestras perspectivas. @cr-gender-nb
 
 :::{#cr-gender-mujeres}
 ```{python}
 #| echo: false
-DIM = "#334155"
-fig = go.Figure()
-colors_m = ["#fbbf24", DIM, DIM]
-fig.add_trace(go.Bar(
-    y=gender_df["Gender"], x=gender_df["Count"], orientation="h",
-    marker_color=colors_m,
-    text=[f"{c} ({p}%)" for c, p in zip(gender_df["Count"], gender_df["Pct"])],
-    textposition="inside",
-    insidetextanchor="middle",
-    textfont=dict(family=FONT, size=14, color="#f8fafc"),
-))
-styled(fig, "Composición por Género")
-fig.update_layout(width=350, yaxis=dict(autorange="reversed"))
-fig.show(config={"displayModeBar": False})
+make_hbar(gender_df, "Gender", "Count",
+          hl(gender_df["Gender"], gender_df["Color"], {"Mujeres"}),
+          gender_df["Label"], "Composición por Género")
 ```
 :::
 
 :::{#cr-gender-hombres}
 ```{python}
 #| echo: false
-fig = go.Figure()
-colors_h = [DIM, "#38bdf8", DIM]
-fig.add_trace(go.Bar(
-    y=gender_df["Gender"], x=gender_df["Count"], orientation="h",
-    marker_color=colors_h,
-    text=[f"{c} ({p}%)" for c, p in zip(gender_df["Count"], gender_df["Pct"])],
-    textposition="inside",
-    insidetextanchor="middle",
-    textfont=dict(family=FONT, size=14, color="#f8fafc"),
-))
-styled(fig, "Composición por Género")
-fig.update_layout(width=350, yaxis=dict(autorange="reversed"))
-fig.show(config={"displayModeBar": False})
+make_hbar(gender_df, "Gender", "Count",
+          hl(gender_df["Gender"], gender_df["Color"], {"Hombres"}),
+          gender_df["Label"], "Composición por Género")
 ```
 :::
 
 :::{#cr-gender-nb}
 ```{python}
 #| echo: false
-fig = go.Figure()
-colors_nb = [DIM, DIM, "#a78bfa"]
-fig.add_trace(go.Bar(
-    y=gender_df["Gender"], x=gender_df["Count"], orientation="h",
-    marker_color=colors_nb,
-    text=[f"{c} ({p}%)" for c, p in zip(gender_df["Count"], gender_df["Pct"])],
-    textposition="inside",
-    insidetextanchor="middle",
-    textfont=dict(family=FONT, size=14, color="#f8fafc"),
-))
-styled(fig, "Composición por Género")
-fig.update_layout(width=350, yaxis=dict(autorange="reversed"))
-fig.show(config={"displayModeBar": False})
+make_hbar(gender_df, "Gender", "Count",
+          hl(gender_df["Gender"], gender_df["Color"], {"No binario"}),
+          gender_df["Label"], "Composición por Género")
 ```
 :::
 
@@ -262,28 +341,42 @@ fig.show(config={"displayModeBar": False})
 
 :::{.cr-section}
 
-Venimos de **12 campos profesionales diferentes**. La sostenibilidad necesita de todas las disciplinas. @cr-careers
+Venimos de **12 campos profesionales diferentes**. La sostenibilidad necesita de todas las disciplinas. @cr-careers-tech
 
-**Ingenieros de Software (28)** y **Científicos de Datos (24)** lideran el grupo. @cr-careers
+[**Ingenieros de Software (28)**]{style="color:#818cf8"} y [**Científicos de Datos (24)**]{style="color:#818cf8"} lideran el grupo. @cr-careers-tech
 
-**Científicos Ambientales (18)**, **Diseñadores (16)** y **Comunicadores (14)** nos mantienen con los pies en la tierra. @cr-careers
+[**Científicos Ambientales (18)**]{style="color:#34d399"}, [**Diseñadores (16)**]{style="color:#f472b6"} y [**Comunicadores (14)**]{style="color:#fbbf24"} nos mantienen con los pies en la tierra. @cr-careers-mid
 
-Desde **Políticas Públicas** hasta **Agricultura** y **Periodismo** --- cada voz importa. @cr-careers
+Desde [**Políticas Públicas**]{style="color:#a78bfa"} hasta [**Agricultura**]{style="color:#86efac"} y [**Periodismo**]{style="color:#67e8f9"} --- cada voz importa. @cr-careers-other
 
-:::{#cr-careers}
+:::{#cr-careers-tech}
 ```{python}
 #| echo: false
-sorted_career = career_df.sort_values("Count", ascending=True)
-sorted_colors = list(reversed(career_colors))
+tech = {"Ingeniería de Software", "Ciencia de Datos"}
+make_hbar(sorted_career, "Career", "Count",
+          [career_color_map[n] if n in tech else DIM for n in sorted_career["Career"]],
+          sorted_career["Count"], "12 Campos Profesionales")
+```
+:::
 
-fig = go.Figure()
-fig.add_trace(go.Bar(
-    y=sorted_career["Career"], x=sorted_career["Count"], orientation="h",
-    marker_color=sorted_colors,
-    text=sorted_career["Count"], textposition="outside",
-))
-styled(fig, "12 Campos Profesionales")
-fig.show(config={"displayModeBar": False})
+:::{#cr-careers-mid}
+```{python}
+#| echo: false
+mid = {"Ciencias Ambientales", "Diseño / UX", "Marketing y Comunicación"}
+make_hbar(sorted_career, "Career", "Count",
+          [career_color_map[n] if n in mid else DIM for n in sorted_career["Career"]],
+          sorted_career["Count"], "12 Campos Profesionales")
+```
+:::
+
+:::{#cr-careers-other}
+```{python}
+#| echo: false
+other = set(career_df["Career"]) - {"Ingeniería de Software", "Ciencia de Datos",
+        "Ciencias Ambientales", "Diseño / UX", "Marketing y Comunicación"}
+make_hbar(sorted_career, "Career", "Count",
+          [career_color_map[n] if n in other else DIM for n in sorted_career["Career"]],
+          sorted_career["Count"], "12 Campos Profesionales")
 ```
 :::
 
@@ -294,26 +387,38 @@ fig.show(config={"displayModeBar": False})
 
 :::{.cr-section}
 
-En la era de los datos, ¿qué tan bien hablamos **Python**? @cr-python
+En la era de los datos, ¿qué tan bien hablamos **Python**? @cr-python-nosabe
 
-**35 Principiantes (23%)** --- `print("hola mundo")` nunca se sintió tan bien. @cr-python
+[**30 no saben Python (20%)**]{style="color:#f87171"} --- pero están aquí para aprender. @cr-python-nosabe
 
-**55 Intermedios (37%)** --- ¡el grupo más grande! @cr-python
+[**28 Principiantes (19%)**]{style="color:#86efac"} --- `print("hola mundo")` nunca se sintió tan bien. Y [**45 Intermedios (30%)**]{style="color:#4ade80"} --- ¡el grupo más grande! @cr-python-begin
 
-**40 Avanzados (27%)** y **20 Expertos (13%)** --- juntos, **el 77% son de nivel Intermedio o superior**. @cr-python
+[**32 Avanzados (21%)**]{style="color:#22c55e"} y [**15 Expertos (10%)**]{style="color:#34d399"} --- juntos, **el 61% son de nivel Intermedio o superior**. @cr-python-adv
 
-:::{#cr-python}
+:::{#cr-python-nosabe}
 ```{python}
 #| echo: false
-fig = go.Figure()
-fig.add_trace(go.Bar(
-    y=python_df["Level"], x=python_df["Count"], orientation="h",
-    marker_color=python_df["Color"],
-    text=[f"{c} ({p}%)" for c, p in zip(python_df["Count"], python_df["Pct"])],
-    textposition="outside",
-))
-styled(fig, "Dominio de Python")
-fig.show(config={"displayModeBar": False})
+make_hbar(python_df, "Level", "Count",
+          hl(python_df["Level"], python_df["Color"], {"No sabe"}),
+          python_df["Label"], "Dominio de Python")
+```
+:::
+
+:::{#cr-python-begin}
+```{python}
+#| echo: false
+make_hbar(python_df, "Level", "Count",
+          hl(python_df["Level"], python_df["Color"], {"Principiante", "Intermedio"}),
+          python_df["Label"], "Dominio de Python")
+```
+:::
+
+:::{#cr-python-adv}
+```{python}
+#| echo: false
+make_hbar(python_df, "Level", "Count",
+          hl(python_df["Level"], python_df["Color"], {"Avanzado", "Experto"}),
+          python_df["Label"], "Dominio de Python")
 ```
 :::
 
@@ -324,27 +429,39 @@ fig.show(config={"displayModeBar": False})
 
 :::{.cr-section layout="overlay-center"}
 
-Preguntamos: **"¿Cuál ODS está más cerca de tu corazón?"** @cr-sdg
+Preguntamos: **"¿Cuál ODS está más cerca de tu corazón?"** @cr-sdg-climate
 
-**ODS 13 --- Acción por el Clima** ganó con 32 votos. @cr-sdg
+[**ODS 13 --- Acción por el Clima**]{style="color:#4ade80"} ganó con 32 votos. @cr-sdg-climate
 
-**Educación de Calidad (22)** y **Agua Limpia (18)** completan el top 3. @cr-sdg
+[**Educación de Calidad (22)**]{style="color:#f87171"} y [**Agua Limpia (18)**]{style="color:#22d3ee"} completan el top 3. @cr-sdg-top3
 
-Nuestras pasiones abarcan toda la Agenda 2030. @cr-sdg
+Nuestras pasiones abarcan toda la Agenda 2030. @cr-sdg-all
 
-:::{#cr-sdg}
+:::{#cr-sdg-climate}
 ```{python}
 #| echo: false
-fig = go.Figure()
-fig.add_trace(go.Treemap(
-    labels=sdg_df["SDG"], parents=[""] * len(sdg_df),
-    values=sdg_df["Votes"], marker_colors=sdg_df["Color"],
-    texttemplate="<b>%{label}</b><br>%{value} votos",
-    textfont=dict(family=FONT, size=14),
-    pathbar=dict(textfont=dict(family=FONT, size=12)),
-))
-styled(fig, "ODS Favoritos — Tamaño por Votos")
-fig.show(config={"displayModeBar": False})
+make_treemap(sdg_df, "SDG", "Votes",
+             hl(sdg_df["SDG"], sdg_df["Color"], {"13: Acción por el Clima"}),
+             "ODS Favoritos — Tamaño por Votos")
+```
+:::
+
+:::{#cr-sdg-top3}
+```{python}
+#| echo: false
+make_treemap(sdg_df, "SDG", "Votes",
+             hl(sdg_df["SDG"], sdg_df["Color"],
+                {"13: Acción por el Clima", "4: Educación de Calidad", "6: Agua Limpia"}),
+             "ODS Favoritos — Tamaño por Votos")
+```
+:::
+
+:::{#cr-sdg-all}
+```{python}
+#| echo: false
+make_treemap(sdg_df, "SDG", "Votes",
+             list(sdg_df["Color"]),
+             "ODS Favoritos — Tamaño por Votos")
 ```
 :::
 
@@ -355,30 +472,45 @@ fig.show(config={"displayModeBar": False})
 
 :::{.cr-section}
 
-**¿Qué bebemos cada semana?** @cr-drinks
+**¿Qué bebemos cada semana?** @cr-drinks-agua
 
-**2,100 litros de agua** --- ¡suficiente para llenar **10 bañeras**! @cr-drinks
+[**2,100 litros de agua**]{style="color:#38bdf8"} --- ¡suficiente para llenar **10 bañeras**! @cr-drinks-agua
 
-**525 litros de café** --- 3.5 litros por persona, aproximadamente **5 tazas al día**. @cr-drinks
+[**525 litros de café**]{style="color:#d97706"} --- 3.5 litros por persona, aproximadamente **5 tazas al día**. @cr-drinks-cafe
 
-Más **300L de té**, **150L de refresco**, **120L de jugo** y **45L de bebidas energizantes**. @cr-drinks
+Más [**300L de té**]{style="color:#84cc16"}, [**150L de refresco**]{style="color:#ef4444"}, [**120L de jugo**]{style="color:#f59e0b"} y [**45L de energizantes**]{style="color:#10b981"}. @cr-drinks-rest
 
-::::{focus-on="cr-drinks"}
+::::{focus-on="cr-drinks-rest"}
 **Dato curioso:** ¡Nuestras botellas de agua semanales alineadas se extenderían 2.1 km --- 20 canchas de fútbol!
 ::::
 
-:::{#cr-drinks}
+:::{#cr-drinks-agua}
 ```{python}
 #| echo: false
-fig = go.Figure()
-fig.add_trace(go.Bar(
-    x=bev_df["Drink"], y=bev_df["Liters"],
-    marker_color=bev_df["Color"],
-    text=[f"{l:,}L" for l in bev_df["Liters"]],
-    textposition="outside",
-))
-styled(fig, "Bebidas Semanales (150 personas)")
-fig.show(config={"displayModeBar": False})
+make_vbar(bev_df, "Drink", "Liters",
+          hl(bev_df["Drink"], bev_df["Color"], {"Agua"}),
+          [f"{l:,}L" for l in bev_df["Liters"]],
+          "Bebidas Semanales (150 personas)")
+```
+:::
+
+:::{#cr-drinks-cafe}
+```{python}
+#| echo: false
+make_vbar(bev_df, "Drink", "Liters",
+          hl(bev_df["Drink"], bev_df["Color"], {"Café"}),
+          [f"{l:,}L" for l in bev_df["Liters"]],
+          "Bebidas Semanales (150 personas)")
+```
+:::
+
+:::{#cr-drinks-rest}
+```{python}
+#| echo: false
+make_vbar(bev_df, "Drink", "Liters",
+          hl(bev_df["Drink"], bev_df["Color"], {"Té", "Refresco", "Jugo", "Energizante"}),
+          [f"{l:,}L" for l in bev_df["Liters"]],
+          "Bebidas Semanales (150 personas)")
 ```
 :::
 
@@ -389,35 +521,48 @@ fig.show(config={"displayModeBar": False})
 
 :::{.cr-section}
 
-Cada semana recorremos **15,000 km** combinados --- ¡un tercio de la vuelta al mundo! @cr-transport
+Cada semana recorremos **15,000 km** combinados --- ¡un tercio de la vuelta al mundo! @cr-transport-auto
 
-Los **autos** lideran con **6,750 km/semana** (45%). @cr-transport
+Los [**autos**]{style="color:#ef4444"} lideran con **6,750 km/semana** (45%). @cr-transport-auto
 
-**Buses** con **4,500 km** (30%). @cr-transport
+Los [**buses**]{style="color:#f59e0b"} con **4,500 km** (30%). @cr-transport-bus
 
-**2,250 km caminando** y **1,500 km en bicicleta** --- 25 km de emisiones cero por persona. @cr-transport
+[**2,250 km caminando**]{style="color:#22c55e"} y [**1,500 km en bicicleta**]{style="color:#3b82f6"} --- 25 km de emisiones cero por persona. @cr-transport-green
 
-::::{focus-on="cr-transport"}
+::::{focus-on="cr-transport-green"}
 **Reto:** ¡Cambia los viajes en auto de menos de 5 km por bicicleta y ahorra **820 kg de CO2/semana**!
 ::::
 
-:::{#cr-transport}
+:::{#cr-transport-auto}
 ```{python}
 #| echo: false
-fig = go.Figure()
-fig.add_trace(go.Pie(
-    labels=transport_df["Mode"], values=transport_df["TotalKm"],
-    marker_colors=transport_df["Color"], hole=0.5, sort=False,
-    texttemplate="<b>%{label}</b><br>%{value:,} km",
-    textfont=dict(family=FONT, size=14, color="#f8fafc"),
-    insidetextfont=dict(family=FONT, size=13, color="#f8fafc"),
-    outsidetextfont=dict(family=FONT, size=13, color=TEXT),
-))
-styled(fig, "Viajes Semanales: 15,000 km")
-fig.update_layout(annotations=[dict(text="<b>15,000</b><br>km/semana",
-                                    x=0.5, y=0.5, showarrow=False,
-                                    font=dict(family=TITLE_FONT, color=ACCENT, size=18))])
-fig.show(config={"displayModeBar": False})
+make_pie(transport_df, "Mode", "TotalKm",
+         hl(transport_df["Mode"], transport_df["Color"], {"Auto"}),
+         "Viajes Semanales: 15,000 km",
+         center="<b>15,000</b><br>km/semana",
+         tmpl="<b>%{label}</b><br>%{value:,} km")
+```
+:::
+
+:::{#cr-transport-bus}
+```{python}
+#| echo: false
+make_pie(transport_df, "Mode", "TotalKm",
+         hl(transport_df["Mode"], transport_df["Color"], {"Bus y Transporte"}),
+         "Viajes Semanales: 15,000 km",
+         center="<b>15,000</b><br>km/semana",
+         tmpl="<b>%{label}</b><br>%{value:,} km")
+```
+:::
+
+:::{#cr-transport-green}
+```{python}
+#| echo: false
+make_pie(transport_df, "Mode", "TotalKm",
+         hl(transport_df["Mode"], transport_df["Color"], {"Caminando", "Bicicleta"}),
+         "Viajes Semanales: 15,000 km",
+         center="<b>15,000</b><br>km/semana",
+         tmpl="<b>%{label}</b><br>%{value:,} km")
 ```
 :::
 
@@ -428,43 +573,32 @@ fig.show(config={"displayModeBar": False})
 
 :::{.cr-section layout="overlay-center"}
 
-**"Nombra tres palabras cuando piensas en los ODS."** @cr-words
+**"Nombra tres palabras cuando piensas en los ODS."** @cr-words-top
 
-**Futuro**, **Esperanza** y **Acción** dominaron. @cr-words
+[**Futuro**]{style="color:#38bdf8"}, [**Esperanza**]{style="color:#f472b6"} y [**Acción**]{style="color:#a78bfa"} dominaron. @cr-words-top
 
-**Juntos**, **Planeta** y **Cambio** --- un viaje compartido hacia la transformación. @cr-words
+[**Juntos**]{style="color:#34d399"}, [**Planeta**]{style="color:#fbbf24"} y [**Cambio**]{style="color:#818cf8"} --- un viaje compartido hacia la transformación. @cr-words-mid
 
-**Innovación** y **Comunidad** --- soluciones desde la creatividad colectiva. @cr-words
+[**Innovación**]{style="color:#a78bfa"} y [**Comunidad**]{style="color:#34d399"} --- soluciones desde la creatividad colectiva. @cr-words-innov
 
-:::{#cr-words}
+:::{#cr-words-top}
 ```{python}
 #| echo: false
-colors_cloud = ["#38bdf8","#f472b6","#a78bfa","#34d399","#fbbf24","#818cf8",
-                "#22d3ee","#fb923c","#86efac","#f472b6","#38bdf8","#fbbf24",
-                "#a78bfa","#34d399","#818cf8","#22d3ee","#f87171","#c084fc",
-                "#86efac","#fb923c","#67e8f9","#fbbf24","#f472b6","#38bdf8",
-                "#34d399","#a78bfa","#818cf8","#fbbf24","#22d3ee","#f87171"]
+make_wordcloud({"Futuro", "Esperanza", "Acción"})
+```
+:::
 
-fig = go.Figure()
-max_m = max(m for _, m in words_data)
-min_m = min(m for _, m in words_data)
+:::{#cr-words-mid}
+```{python}
+#| echo: false
+make_wordcloud({"Juntos", "Planeta", "Cambio"})
+```
+:::
 
-for i, (word, mentions) in enumerate(words_data):
-    angle = i * 0.75
-    radius = 0.5 + i * 0.35
-    frac = (mentions - min_m) / (max_m - min_m)
-    fig.add_trace(go.Scatter(
-        x=[radius * math.cos(angle)],
-        y=[radius * math.sin(angle) * 0.7],
-        mode="text", text=[word],
-        textfont=dict(family=TITLE_FONT, size=10 + frac * 28, color=colors_cloud[i % len(colors_cloud)]),
-        hovertemplate=f"{word}: {mentions} menciones<extra></extra>",
-        showlegend=False,
-    ))
-
-styled(fig, "Palabras por Frecuencia")
-fig.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x"))
-fig.show(config={"displayModeBar": False})
+:::{#cr-words-innov}
+```{python}
+#| echo: false
+make_wordcloud({"Innovación", "Comunidad"})
 ```
 :::
 
@@ -475,29 +609,38 @@ fig.show(config={"displayModeBar": False})
 
 :::{.cr-section}
 
-**"¿Si pudieras ser una fuente de energía renovable?"** @cr-energy
+**"¿Si pudieras ser una fuente de energía renovable?"** @cr-energy-solar
 
-**Solar (52)** --- brillante, cálida, en todas partes. @cr-energy
+[**Solar (52)**]{style="color:#fbbf24"} --- brillante, cálida, en todas partes. @cr-energy-solar
 
-**Eólica (38)** --- libre, imposible de contener. @cr-energy
+[**Eólica (38)**]{style="color:#93c5fd"} --- libre, imposible de contener. @cr-energy-wind
 
-**Geotérmica (18)** --- calma en la superficie, fuego por dentro. **Biomasa (14)** --- alimentada por sobras. @cr-energy
+[**Geotérmica (18)**]{style="color:#f87171"} --- calma en la superficie, fuego por dentro. [**Biomasa (14)**]{style="color:#86efac"} --- alimentada por sobras. @cr-energy-other
 
-:::{#cr-energy}
+:::{#cr-energy-solar}
 ```{python}
 #| echo: false
-fig = go.Figure()
-fig.add_trace(go.Scatter(
-    x=energy_df["Source"], y=energy_df["Votes"],
-    mode="markers+text",
-    marker=dict(size=energy_df["Votes"] * 1.8, color=energy_df["Color"],
-                opacity=0.75, line=dict(color="rgba(148,163,184,0.3)", width=1)),
-    text=[f"<b>{v}</b>" for v in energy_df["Votes"]],
-    textposition="middle center",
-    textfont=dict(family=TITLE_FONT, size=16, color="#f8fafc"),
-))
-styled(fig, "Tu Alter Ego Renovable")
-fig.show(config={"displayModeBar": False})
+make_bubble(energy_df, "Source", "Votes",
+            hl(energy_df["Source"], energy_df["Color"], {"Solar"}),
+            "Tu Alter Ego Renovable")
+```
+:::
+
+:::{#cr-energy-wind}
+```{python}
+#| echo: false
+make_bubble(energy_df, "Source", "Votes",
+            hl(energy_df["Source"], energy_df["Color"], {"Eólica"}),
+            "Tu Alter Ego Renovable")
+```
+:::
+
+:::{#cr-energy-other}
+```{python}
+#| echo: false
+make_bubble(energy_df, "Source", "Votes",
+            hl(energy_df["Source"], energy_df["Color"], {"Geotérmica", "Biomasa"}),
+            "Tu Alter Ego Renovable")
 ```
 :::
 
@@ -508,31 +651,41 @@ fig.show(config={"displayModeBar": False})
 
 :::{.cr-section}
 
-**"¿Cuál es tu animal espiritual en reuniones de equipo?"** @cr-animals
+**"¿Cuál es tu animal espiritual en reuniones de equipo?"** @cr-animals-sloth
 
-**Perezoso (35)** --- lento, constante, ocasionalmente dormido con los ojos abiertos. @cr-animals
+[**Perezoso (35)**]{style="color:#a78bfa"} --- lento, constante, ocasionalmente dormido con los ojos abiertos. @cr-animals-sloth
 
-**Búho (32)** --- observadores sabios. **Golden Retriever (28)** --- TAN FELIZ de estar aquí. @cr-animals
+[**Búho (32)**]{style="color:#818cf8"} --- observadores sabios. [**Golden Retriever (28)**]{style="color:#fbbf24"} --- TAN FELIZ de estar aquí. @cr-animals-owl
 
-**Gato (25)** --- juzga a todos. **Loro (18)** --- repite al jefe. **Pingüino (12)** --- formal pero se desliza por todos lados. @cr-animals
+[**Gato (25)**]{style="color:#f97316"} --- juzga a todos. [**Loro (18)**]{style="color:#22d3ee"} --- repite al jefe. [**Pingüino (12)**]{style="color:#e2e8f0"} --- formal pero se desliza por todos lados. @cr-animals-rest
 
-:::{#cr-animals}
+:::{#cr-animals-sloth}
 ```{python}
 #| echo: false
-fig = go.Figure()
-fig.add_trace(go.Pie(
-    labels=animal_df["Animal"], values=animal_df["Votes"],
-    marker_colors=animal_df["Color"], hole=0.45, sort=False,
-    texttemplate="<b>%{label}</b><br>%{value}",
-    textfont=dict(family=FONT, size=14, color="#f8fafc"),
-    insidetextfont=dict(family=FONT, size=13, color="#f8fafc"),
-    outsidetextfont=dict(family=FONT, size=13, color=TEXT),
-))
-styled(fig, "Animales Espirituales de Reunión")
-fig.update_layout(annotations=[dict(text="<b>150</b><br>personas",
-                                    x=0.5, y=0.5, showarrow=False,
-                                    font=dict(family=TITLE_FONT, color=ACCENT, size=18))])
-fig.show(config={"displayModeBar": False})
+make_pie(animal_df, "Animal", "Votes",
+         hl(animal_df["Animal"], animal_df["Color"], {"Perezoso"}),
+         "Animales Espirituales de Reunión",
+         center="<b>150</b><br>personas")
+```
+:::
+
+:::{#cr-animals-owl}
+```{python}
+#| echo: false
+make_pie(animal_df, "Animal", "Votes",
+         hl(animal_df["Animal"], animal_df["Color"], {"Búho", "Golden Retriever"}),
+         "Animales Espirituales de Reunión",
+         center="<b>150</b><br>personas")
+```
+:::
+
+:::{#cr-animals-rest}
+```{python}
+#| echo: false
+make_pie(animal_df, "Animal", "Votes",
+         hl(animal_df["Animal"], animal_df["Color"], {"Gato", "Loro", "Pingüino"}),
+         "Animales Espirituales de Reunión",
+         center="<b>150</b><br>personas")
 ```
 :::
 
@@ -543,26 +696,38 @@ fig.show(config={"displayModeBar": False})
 
 :::{.cr-section}
 
-**"¿Cuántas plantas de interior has compostado accidentalmente?"** @cr-plants
+**"¿Cuántas plantas de interior has compostado accidentalmente?"** @cr-plants-zero
 
-Solo **22 (15%)** afirman tener cero bajas. @cr-plants
+Solo [**22 (15%)**]{style="color:#22c55e"} afirman tener cero bajas. @cr-plants-zero
 
-**45 personas** perdieron **1-3 plantas** --- el grupo más grande. @cr-plants
+[**45 personas**]{style="color:#86efac"} perdieron **1-3 plantas** --- el grupo más grande. @cr-plants-few
 
-**38** perdieron 4-7, **25** confesaron 8+, y **20** dijeron "perdí la cuenta." Total: **~487 plantas**. @cr-plants
+**38** perdieron [4-7]{style="color:#fbbf24"}, **25** confesaron [8+]{style="color:#f97316"}, y **20** dijeron ["perdí la cuenta"]{style="color:#ef4444"}. Total: **~487 plantas**. @cr-plants-many
 
-:::{#cr-plants}
+:::{#cr-plants-zero}
 ```{python}
 #| echo: false
-fig = go.Figure()
-fig.add_trace(go.Bar(
-    y=plant_df["Range"], x=plant_df["Count"], orientation="h",
-    marker_color=plant_df["Color"],
-    text=plant_df["Count"], textposition="outside",
-))
-styled(fig, "Bajas de Plantas de Interior")
-fig.update_layout(yaxis=dict(autorange="reversed"))
-fig.show(config={"displayModeBar": False})
+make_hbar(plant_df, "Range", "Count",
+          hl(plant_df["Range"], plant_df["Color"], {"0 (Encantador de plantas)"}),
+          plant_df["Count"], "Bajas de Plantas de Interior")
+```
+:::
+
+:::{#cr-plants-few}
+```{python}
+#| echo: false
+make_hbar(plant_df, "Range", "Count",
+          hl(plant_df["Range"], plant_df["Color"], {"1-3 plantas"}),
+          plant_df["Count"], "Bajas de Plantas de Interior")
+```
+:::
+
+:::{#cr-plants-many}
+```{python}
+#| echo: false
+make_hbar(plant_df, "Range", "Count",
+          hl(plant_df["Range"], plant_df["Color"], {"4-7 plantas", "8+ plantas", "Perdí la cuenta"}),
+          plant_df["Count"], "Bajas de Plantas de Interior")
 ```
 :::
 
