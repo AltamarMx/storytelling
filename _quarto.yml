@@ -9,6 +9,7 @@ jupyter: python3
 format:
   closeread-html:
     remove-header-space: true
+    embed-resources: true
     cr-style:
       narrative-background-color-overlay: "rgba(15, 23, 42, 0.92)"
       narrative-text-color-overlay: "#f1f5f9"

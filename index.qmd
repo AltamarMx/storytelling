@@ -52,6 +52,38 @@ jupyter: python3
     padding: 0.5rem 1.1rem; border-radius: 999px;
     font-size: 0.85rem; font-weight: 600;
   }
+
+  /* Force Plotly charts to fill their container */
+  .js-plotly-plot, .plotly, .plot-container {
+    width: 100% !important;
+  }
+  .js-plotly-plot .plotly .main-svg {
+    width: 100% !important;
+  }
+
+  /* ---------- MOBILE RESPONSIVE ---------- */
+  @media (max-width: 768px) {
+    .hero-title { font-size: 2rem; }
+    .hero-sub { font-size: 1rem; }
+    .big-num { font-size: 5rem; }
+    .big-label { font-size: 1rem; }
+    .hero-box { min-height: 60svh; padding: 1rem; }
+    .fun-fact { padding: 0.8rem 1rem; font-size: 0.9rem; }
+    .closing-badges { gap: 0.4rem; }
+    .badge { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+
+    /* Plotly containers: prevent overflow */
+    .cell-output-display {
+      overflow-x: hidden !important;
+      width: 100% !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-title { font-size: 1.6rem; }
+    .big-num { font-size: 3.5rem; }
+    .big-label { font-size: 0.85rem; }
+  }
 </style>
 ```
 
@@ -68,10 +100,17 @@ import pandas as pd
 dark_template = dict(
     paper_bgcolor="rgba(30, 41, 59, 0.75)",
     plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="Inter, sans-serif", color="#e2e8f0"),
-    title_font=dict(family="Space Grotesk, sans-serif", size=20, color="#f1f5f9"),
-    margin=dict(l=20, r=20, t=60, b=20),
+    font=dict(family="Inter, sans-serif", color="#e2e8f0", size=12),
+    title_font=dict(family="Space Grotesk, sans-serif", size=18, color="#f1f5f9"),
+    margin=dict(l=10, r=10, t=50, b=20),
+    autosize=True,
 )
+
+plotly_config = {"responsive": True, "displayModeBar": False}
+
+def show(fig):
+    """Show a Plotly figure with responsive config."""
+    fig.show(config=plotly_config)
 
 # ============================================================
 # DATA
@@ -238,20 +277,19 @@ fig.add_trace(go.Bar(
     ),
     text=[f"  {c}  ({p}%)" for c, p in zip(gender_df["Count"], gender_df["Pct"])],
     textposition="outside",
-    textfont=dict(size=16, family="Space Grotesk", color="#e2e8f0"),
+    textfont=dict(size=13, family="Space Grotesk", color="#e2e8f0"),
     hovertemplate="%{y}: %{x} people<extra></extra>",
 ))
 
 fig.update_layout(
     **dark_template,
     title="Gender Composition",
-    xaxis=dict(title="Number of People", gridcolor="rgba(148,163,184,0.1)",
-               range=[0, 85]),
-    yaxis=dict(title="", autorange="reversed"),
-    height=380,
+    xaxis=dict(title="", gridcolor="rgba(148,163,184,0.1)", range=[0, 85]),
+    yaxis=dict(title="", autorange="reversed", automargin=True),
+    height=350,
     showlegend=False,
 )
-fig.show()
+show(fig)
 ```
 :::
 
@@ -295,12 +333,12 @@ fig.add_trace(go.Bar(
 fig.update_layout(
     **dark_template,
     title="12 Career Fields",
-    xaxis=dict(title="People", gridcolor="rgba(148,163,184,0.1)", range=[0, 35]),
-    yaxis=dict(title=""),
-    height=500,
+    xaxis=dict(title="", gridcolor="rgba(148,163,184,0.1)", range=[0, 35]),
+    yaxis=dict(title="", automargin=True),
+    height=480,
     showlegend=False,
 )
-fig.show()
+show(fig)
 ```
 :::
 
@@ -336,25 +374,24 @@ fig.add_trace(go.Bar(
     text=[f"  {e} {c} ({p}%)" for e, c, p in
           zip(python_df["Emoji"], python_df["Count"], python_df["Pct"])],
     textposition="outside",
-    textfont=dict(size=15, family="Space Grotesk", color="#e2e8f0"),
+    textfont=dict(size=12, family="Space Grotesk", color="#e2e8f0"),
     hovertemplate="%{y}: %{x} people<extra></extra>",
 ))
 
 fig.update_layout(
     **dark_template,
     title="Python Proficiency",
-    xaxis=dict(title="Number of People", gridcolor="rgba(148,163,184,0.1)",
-               range=[0, 75]),
-    yaxis=dict(title=""),
-    height=360,
+    xaxis=dict(title="", gridcolor="rgba(148,163,184,0.1)", range=[0, 75]),
+    yaxis=dict(title="", automargin=True),
+    height=340,
     showlegend=False,
     annotations=[dict(
         text="77% are Intermediate or above",
-        xref="paper", yref="paper", x=0.5, y=-0.08,
-        showarrow=False, font=dict(size=12, color="#64748b")
+        xref="paper", yref="paper", x=0.5, y=-0.06,
+        showarrow=False, font=dict(size=11, color="#64748b")
     )]
 )
-fig.show()
+show(fig)
 ```
 :::
 
@@ -397,7 +434,7 @@ fig.update_layout(
     title="Our Favorite SDGs — Sized by Votes",
     height=520,
 )
-fig.show()
+show(fig)
 ```
 :::
 
@@ -439,28 +476,26 @@ fig.add_trace(go.Bar(
         cornerradius=8,
         line=dict(width=0),
     ),
-    text=[f"<b>{l:,}L</b><br><span style='font-size:11px'>{pp}L/person</span>"
-          for l, pp in zip(bev_df["Liters"], bev_df["PerPerson"])],
+    text=[f"<b>{l:,}L</b>" for l in bev_df["Liters"]],
     textposition="outside",
-    textfont=dict(size=14, family="Space Grotesk", color="#e2e8f0"),
+    textfont=dict(size=12, family="Space Grotesk", color="#e2e8f0"),
     hovertemplate="%{x}<br>Total: %{y:,}L per week<extra></extra>",
 ))
 
 fig.update_layout(
     **dark_template,
-    title="Weekly Beverage Consumption (150 people)",
-    yaxis=dict(title="Liters / Week", gridcolor="rgba(148,163,184,0.1)",
-               range=[0, 2600]),
-    xaxis=dict(title=""),
-    height=460,
+    title="Weekly Beverages (150 people)",
+    yaxis=dict(title="", gridcolor="rgba(148,163,184,0.1)", range=[0, 2600]),
+    xaxis=dict(title="", automargin=True),
+    height=420,
     showlegend=False,
     annotations=[dict(
-        text="Total: 3,240 liters — enough to fill a small swimming pool",
-        xref="paper", yref="paper", x=0.5, y=-0.08,
+        text="Total: 3,240 L/week",
+        xref="paper", yref="paper", x=0.5, y=-0.06,
         showarrow=False, font=dict(size=11, color="#64748b")
     )]
 )
-fig.show()
+show(fig)
 ```
 :::
 
@@ -500,24 +535,24 @@ fig.add_trace(go.Pie(
     marker=dict(colors=transport_df["Color"],
                 line=dict(color="#1e293b", width=3)),
     hole=0.52,
-    texttemplate="<b>%{label}</b><br>%{value:,} km<br>(%{percent})",
-    textfont=dict(family="Space Grotesk, sans-serif", size=13, color="#f1f5f9"),
+    texttemplate="<b>%{label}</b><br>%{value:,} km",
+    textfont=dict(family="Space Grotesk, sans-serif", size=11, color="#f1f5f9"),
     hovertemplate="%{label}<br>%{value:,} km/week<br>%{percent}<extra></extra>",
     sort=False,
 ))
 
 fig.update_layout(
     **dark_template,
-    title="Weekly Travel: 15,000 km Total",
-    height=480,
+    title="Weekly Travel: 15,000 km",
+    height=440,
     showlegend=False,
     annotations=[dict(
         text="<b>15,000</b><br>km/week",
-        x=0.5, y=0.5, font=dict(size=18, color="#f1f5f9", family="Space Grotesk"),
+        x=0.5, y=0.5, font=dict(size=16, color="#f1f5f9", family="Space Grotesk"),
         showarrow=False
     )]
 )
-fig.show()
+show(fig)
 ```
 :::
 
@@ -567,9 +602,9 @@ max_mentions = words_df["Mentions"].max()
 min_mentions = words_df["Mentions"].min()
 
 for i, row in words_df.iterrows():
-    # Scale font size between 12 and 42 based on mentions
+    # Scale font size between 10 and 34 based on mentions
     frac = (row["Mentions"] - min_mentions) / (max_mentions - min_mentions)
-    font_size = 12 + frac * 30
+    font_size = 10 + frac * 24
 
     fig.add_trace(go.Scatter(
         x=[x_coords[i]],
@@ -587,12 +622,12 @@ for i, row in words_df.iterrows():
 
 fig.update_layout(
     **dark_template,
-    title="What We Think About — Words Sized by Frequency",
+    title="Words Sized by Frequency",
     xaxis=dict(visible=False),
     yaxis=dict(visible=False, scaleanchor="x"),
-    height=520,
+    height=450,
 )
-fig.show()
+show(fig)
 ```
 :::
 
@@ -639,12 +674,12 @@ fig.add_trace(go.Scatter(
 fig.update_layout(
     **dark_template,
     title="Your Renewable Alter Ego",
-    xaxis=dict(title=""),
+    xaxis=dict(title="", automargin=True),
     yaxis=dict(title="Votes", gridcolor="rgba(148,163,184,0.1)", range=[0, 68]),
-    height=420,
+    height=400,
     showlegend=False,
 )
-fig.show()
+show(fig)
 ```
 :::
 
@@ -681,7 +716,7 @@ fig.add_trace(go.Pie(
     ),
     hole=0.45,
     texttemplate="<b>%{label}</b><br>%{value}",
-    textfont=dict(family="Space Grotesk, sans-serif", size=12, color="#f1f5f9"),
+    textfont=dict(family="Space Grotesk, sans-serif", size=11, color="#f1f5f9"),
     hovertemplate="%{label}: %{value} votes (%{percent})<extra></extra>",
     sort=False,
 ))
@@ -689,7 +724,7 @@ fig.add_trace(go.Pie(
 fig.update_layout(
     **dark_template,
     title="Meeting Spirit Animals",
-    height=460,
+    height=420,
     showlegend=False,
     annotations=[dict(
         text="<b>150</b><br>people",
@@ -697,7 +732,7 @@ fig.update_layout(
         showarrow=False
     )]
 )
-fig.show()
+show(fig)
 ```
 :::
 
@@ -732,24 +767,24 @@ fig.add_trace(go.Bar(
     marker=dict(color=plant_df["Color"], cornerradius=8),
     text=[f"  {i} {c}" for i, c in zip(plant_df["Icon"], plant_df["Count"])],
     textposition="outside",
-    textfont=dict(size=15, family="Space Grotesk", color="#e2e8f0"),
+    textfont=dict(size=12, family="Space Grotesk", color="#e2e8f0"),
     hovertemplate="%{y}: %{x} people<extra></extra>",
 ))
 
 fig.update_layout(
     **dark_template,
     title="Houseplant Casualties",
-    xaxis=dict(title="People", gridcolor="rgba(148,163,184,0.1)", range=[0, 58]),
-    yaxis=dict(title="", autorange="reversed"),
-    height=400,
+    xaxis=dict(title="", gridcolor="rgba(148,163,184,0.1)", range=[0, 58]),
+    yaxis=dict(title="", autorange="reversed", automargin=True),
+    height=380,
     showlegend=False,
     annotations=[dict(
-        text="Combined casualties: ~487 plants 🪦",
-        xref="paper", yref="paper", x=0.5, y=-0.1,
-        showarrow=False, font=dict(size=12, color="#64748b")
+        text="~487 plants lost",
+        xref="paper", yref="paper", x=0.5, y=-0.06,
+        showarrow=False, font=dict(size=11, color="#64748b")
     )]
 )
-fig.show()
+show(fig)
 ```
 :::
 
