@@ -566,32 +566,86 @@ make_pie(transport_df, "Mode", "TotalKm",
 
 :::{.cr-section layout="overlay-center"}
 
-**"Nombra tres palabras cuando piensas en los ODS."** @cr-words-top
+**"Nombra tres palabras cuando piensas en los ODS."** @cr-w-futuro
 
-[**Futuro**]{style="color:#38bdf8"}, [**Esperanza**]{style="color:#f472b6"} y [**Acción**]{style="color:#a78bfa"} dominaron. @cr-words-top
+[**Futuro**]{style="color:#38bdf8"} --- mencionada **48 veces**. Lo que nos mueve es lo que viene después. @cr-w-futuro
 
-[**Juntos**]{style="color:#34d399"}, [**Planeta**]{style="color:#fbbf24"} y [**Cambio**]{style="color:#818cf8"} --- un viaje compartido hacia la transformación. @cr-words-mid
+[**Esperanza**]{style="color:#f472b6"} --- **44 veces**. El combustible que no se agota. @cr-w-esperanza
 
-[**Innovación**]{style="color:#a78bfa"} y [**Comunidad**]{style="color:#34d399"} --- soluciones desde la creatividad colectiva. @cr-words-innov
+[**Acción**]{style="color:#a78bfa"} --- **42 veces**. Las palabras sin acción son solo ruido. @cr-w-accion
 
-:::{#cr-words-top}
+[**Juntos**]{style="color:#34d399"} --- **40 veces**. Nadie cambia el mundo solo. @cr-w-juntos
+
+[**Planeta**]{style="color:#fbbf24"} --- **38 veces**. Nuestra casa compartida, la única que tenemos. @cr-w-planeta
+
+[**Cambio**]{style="color:#818cf8"} --- **36 veces**. La razón por la que estamos aquí. @cr-w-cambio
+
+[**Justicia**]{style="color:#22d3ee"} --- **34 veces**. En el corazón de la sostenibilidad. @cr-w-justicia
+
+[**Clima**]{style="color:#fb923c"} --- **33 veces**. El desafío de nuestra generación. @cr-w-clima
+
+Y después: [**Igualdad**]{style="color:#fbbf24"}, [**Innovación**]{style="color:#a78bfa"}, [**Comunidad**]{style="color:#34d399"} y muchas más --- **30 palabras** que dibujan quiénes somos. @cr-w-all
+
+:::{#cr-w-futuro}
 ```{python}
 #| echo: false
-make_wordcloud({"Futuro", "Esperanza", "Acción"})
+make_wordcloud({"Futuro"})
 ```
 :::
 
-:::{#cr-words-mid}
+:::{#cr-w-esperanza}
 ```{python}
 #| echo: false
-make_wordcloud({"Juntos", "Planeta", "Cambio"})
+make_wordcloud({"Esperanza"})
 ```
 :::
 
-:::{#cr-words-innov}
+:::{#cr-w-accion}
 ```{python}
 #| echo: false
-make_wordcloud({"Innovación", "Comunidad"})
+make_wordcloud({"Acción"})
+```
+:::
+
+:::{#cr-w-juntos}
+```{python}
+#| echo: false
+make_wordcloud({"Juntos"})
+```
+:::
+
+:::{#cr-w-planeta}
+```{python}
+#| echo: false
+make_wordcloud({"Planeta"})
+```
+:::
+
+:::{#cr-w-cambio}
+```{python}
+#| echo: false
+make_wordcloud({"Cambio"})
+```
+:::
+
+:::{#cr-w-justicia}
+```{python}
+#| echo: false
+make_wordcloud({"Justicia"})
+```
+:::
+
+:::{#cr-w-clima}
+```{python}
+#| echo: false
+make_wordcloud({"Clima"})
+```
+:::
+
+:::{#cr-w-all}
+```{python}
+#| echo: false
+make_wordcloud()
 ```
 :::
 
