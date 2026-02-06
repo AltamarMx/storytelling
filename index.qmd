@@ -130,20 +130,24 @@ def make_wordcloud(highlight_words=None):
     fig = go.Figure()
     max_m = max(m for _, m in words_data)
     min_m = min(m for _, m in words_data)
-    for i, (word, mentions) in enumerate(words_data):
-        angle = i * 0.75
-        radius = 0.5 + i * 0.35
-        frac = (mentions - min_m) / (max_m - min_m)
-        c = colors_cloud[i % len(colors_cloud)]
-        color = c if (highlight_words is None or word in highlight_words) else DIM
-        fig.add_trace(go.Scatter(
-            x=[radius * math.cos(angle)],
-            y=[radius * math.sin(angle) * 0.7],
-            mode="text", text=[word],
-            textfont=dict(family=TITLE_FONT, size=10 + frac * 28, color=color),
-            hovertemplate=f"{word}: {mentions} menciones<extra></extra>",
-            showlegend=False,
-        ))
+    # Two passes: dimmed first, highlighted on top
+    for is_highlight_pass in (False, True):
+        for i, (word, mentions) in enumerate(words_data):
+            is_hl = highlight_words is None or word in highlight_words
+            if is_hl != is_highlight_pass:
+                continue
+            angle = i * 0.75
+            radius = 0.5 + i * 0.35
+            frac = (mentions - min_m) / (max_m - min_m)
+            color = colors_cloud[i % len(colors_cloud)] if is_hl else DIM
+            fig.add_trace(go.Scatter(
+                x=[radius * math.cos(angle)],
+                y=[radius * math.sin(angle) * 0.7],
+                mode="text", text=[word],
+                textfont=dict(family=TITLE_FONT, size=10 + frac * 28, color=color),
+                hovertemplate=f"{word}: {mentions} menciones<extra></extra>",
+                showlegend=False,
+            ))
     styled(fig, "Palabras por Frecuencia")
     fig.update_layout(width=350, xaxis=dict(visible=False),
                       yaxis=dict(visible=False, scaleanchor="x"))
