@@ -332,7 +332,9 @@ hackods_fig(fig, "Areas de conocimiento")
 
 # Quienes somos?
 
-## Row {height=10%}
+## Row {.tabset .fill}
+
+### Totales
 
 ```{python}
 #| content: valuebox
@@ -359,7 +361,7 @@ pct_mujeres = (df["genero"] == "Mujer").mean() * 100
 dict(icon="person-fill", color="#F26A2D", value=f"{pct_mujeres:.0f}%")
 ```
 
-## Row {height=45%}
+### De que estado venimos?
 
 ```{python}
 #| title: "De que estado venimos?"
@@ -376,10 +378,13 @@ _ = fig.update_traces(
 hackods_fig(fig, "De que estado venimos?")
 ```
 
+### Genero por area de conocimiento
+
 ```{python}
 #| title: "Genero por area de conocimiento"
 cross = pd.crosstab(df["area"], df["genero"])
-cross = cross.reindex(columns=genero_opciones)
+cross = cross.reindex(columns=genero_opciones, fill_value=0)
+cross_pct = cross.div(cross.sum(axis=1), axis=0) * 100
 area_order = cross.sum(axis=1).sort_values(ascending=True).index
 
 gen_colors = {
@@ -389,173 +394,232 @@ gen_colors = {
 
 traces = []
 for gen in genero_opciones:
-    if gen in cross.columns:
+    if gen in cross_pct.columns:
+        counts = cross.loc[area_order, gen]
+        pcts = cross_pct.loc[area_order, gen]
         traces.append(go.Bar(
             y=area_order,
-            x=cross.loc[area_order, gen],
+            x=pcts,
             name=gen,
             orientation="h",
             marker_color=gen_colors[gen],
-            hovertemplate=f"{gen}: " + "%{x} personas<extra></extra>",
+            text=[f"{p:.0f}%" for p in pcts],
+            textposition="inside",
+            textfont=dict(color=WHITE, size=12),
+            hovertemplate=f"{gen}: " + "%{x:.0f}% (%{customdata} personas)<extra></extra>",
+            customdata=counts,
         ))
 fig = go.Figure(data=traces)
-_ = fig.update_layout(barmode="group", legend=dict(orientation="h", y=-0.15))
-_ = fig.update_xaxes(showgrid=False, title_text="")
+_ = fig.update_layout(barmode="stack", legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"))
+_ = fig.update_xaxes(showgrid=False, showticklabels=False, range=[0, 100])
 _ = fig.update_yaxes(showgrid=False)
 hackods_fig(fig)
 ```
 
-## Row {height=40%} {.tabset}
-
-```{python}
-#| title: "Edad y genero"
-traces = []
-for i, gen in enumerate(genero_opciones):
-    subset = df[df["genero"] == gen]["edad"]
-    if len(subset) > 0:
-        traces.append(go.Box(
-            y=subset, name=gen,
-            marker_color=list(gen_colors.values())[i],
-            boxmean=True,
-        ))
-fig = go.Figure(data=traces)
-_ = fig.update_yaxes(title_text="Edad", showgrid=True, gridcolor="#f3f4f6")
-_ = fig.update_xaxes(showgrid=False)
-hackods_fig(fig, "Distribucion de edad por identidad de genero")
-```
+### Mapa geografico
 
 ```{python}
 #| title: "Mapa geografico"
-estado_counts2 = df["estado"].value_counts().reset_index()
-estado_counts2.columns = ["estado", "count"]
-fig = px.sunburst(
-    estado_counts2, path=["estado"], values="count",
-    color_discrete_sequence=HACKODS_CAT,
+import json
+import urllib.request
+import unicodedata
+
+def _normalize(s):
+    nfkd = unicodedata.normalize("NFKD", s)
+    return "".join(c for c in nfkd if not unicodedata.combining(c)).lower().strip()
+
+# GeoJSON de estados mexicanos
+_mx_url = "https://raw.githubusercontent.com/angelnmara/geojson/master/mexicoHigh.json"
+with urllib.request.urlopen(_mx_url) as _resp:
+    mx_geo = json.loads(_resp.read())
+
+# Lookup normalizado de nombres del GeoJSON
+_geo_lookup = {}
+for _feat in mx_geo["features"]:
+    _name = _feat["properties"]["name"]
+    _geo_lookup[_normalize(_name)] = _name
+
+# Mapeo de nuestros nombres a los del GeoJSON
+_manual = {"cdmx": "ciudad de mexico", "estado de mexico": "mexico"}
+
+def _match(our_name):
+    key = _normalize(our_name)
+    key = _manual.get(key, key)
+    if key in _geo_lookup:
+        return _geo_lookup[key]
+    for gk, gv in _geo_lookup.items():
+        if key in gk or gk.startswith(key):
+            return gv
+    return None
+
+# Conteos por estado con nombre GeoJSON
+estado_map = df["estado"].value_counts().reset_index()
+estado_map.columns = ["estado", "count"]
+estado_map["geo_name"] = estado_map["estado"].map(_match)
+
+# Todos los estados (0 participantes por defecto)
+all_geo_names = [f["properties"]["name"] for f in mx_geo["features"]]
+all_states = pd.DataFrame({"geo_name": all_geo_names})
+all_states = all_states.merge(
+    estado_map[["geo_name", "count"]].dropna(subset=["geo_name"]),
+    on="geo_name", how="left",
+).fillna(0)
+
+fig = go.Figure(go.Choropleth(
+    geojson=mx_geo,
+    locations=all_states["geo_name"],
+    z=all_states["count"],
+    featureidkey="properties.name",
+    colorscale=HACKODS_SEQ,
+    marker_line_color="#9ca3af",
+    marker_line_width=1,
+    showscale=True,
+    colorbar=dict(title="Participantes", thickness=15, len=0.5),
+    hovertemplate="<b>%{location}</b><br>%{z:.0f} personas<extra></extra>",
+))
+fig.update_geos(
+    fitbounds="geojson",
+    visible=False,
+    bgcolor=WHITE,
 )
-_ = fig.update_traces(
-    hovertemplate="<b>%{label}</b><br>%{value} personas<extra></extra>",
-)
-hackods_fig(fig, "Estados representados")
+hackods_fig(fig, "De donde venimos?")
 ```
 
 # Nuestras herramientas
 
-## Row {height=10%}
+## Row {.tabset .fill}
+
+### Totales
 
 ```{python}
 #| content: valuebox
-#| title: "Python Intermedio+"
-pct_py = ((df["python_nivel"] == "Intermedio") | (df["python_nivel"] == "Avanzado")).mean() * 100
-dict(icon="filetype-py", color="#0a97d9", value=f"{pct_py:.0f}%")
+#| title: "Saben Python"
+n_py = (df["python_nivel"] != "Nunca lo use").sum()
+dict(icon="filetype-py", color="#0a97d9", value=f"{n_py} de {N}")
 ```
 
 ```{python}
 #| content: valuebox
-#| title: "Quarto Intermedio+"
-pct_q = ((df["quarto_nivel"] == "Intermedio") | (df["quarto_nivel"] == "Avanzado")).mean() * 100
-dict(icon="file-earmark-code", color="#4CA146", value=f"{pct_q:.0f}%")
+#| title: "Saben Quarto"
+n_q = (df["quarto_nivel"] != "Nunca lo use").sum()
+dict(icon="file-earmark-code", color="#4CA146", value=f"{n_q} de {N}")
 ```
 
 ```{python}
 #| content: valuebox
-#| title: "GitHub Pages Intermedio+"
-pct_gh = ((df["github_nivel"] == "Intermedio") | (df["github_nivel"] == "Avanzado")).mean() * 100
-dict(icon="github", color="#E5233D", value=f"{pct_gh:.0f}%")
+#| title: "Saben GitHub Pages"
+n_gh = (df["github_nivel"] != "Nunca lo use").sum()
+dict(icon="github", color="#E5233D", value=f"{n_gh} de {N}")
 ```
 
-## Row {height=45%}
+### Python
 
 ```{python}
-#| title: "Nivel de conocimiento por herramienta"
-tools = ["Python", "Quarto", "GitHub Pages"]
-tool_cols = ["python_nivel", "quarto_nivel", "github_nivel"]
+#| title: "Nivel de Python"
 nivel_order = ["Nunca lo use", "Principiante", "Intermedio", "Avanzado"]
+py_counts = df["python_nivel"].value_counts().reindex(nivel_order, fill_value=0)
+py_pcts = py_counts / N * 100
 
+fig = go.Figure(go.Bar(
+    y=["Python"],
+    x=[py_pcts[n] for n in nivel_order],
+    orientation="h",
+    marker_color=[LEVEL_COLORS[n] for n in nivel_order],
+))
 traces = []
 for nivel in nivel_order:
-    values = []
-    texts = []
-    for col in tool_cols:
-        count = (df[col] == nivel).sum()
-        pct = count / N * 100
-        values.append(pct)
-        texts.append(f"{nivel}: {pct:.0f}%")
+    pct = py_pcts[nivel]
+    count = py_counts[nivel]
     traces.append(go.Bar(
-        y=tools,
-        x=values,
+        y=["Python"],
+        x=[pct],
         name=nivel,
         orientation="h",
         marker_color=LEVEL_COLORS[nivel],
-        text=texts,
+        text=[f"{nivel}: {pct:.0f}%"],
         textposition="inside",
-        textfont=dict(
-            color=WHITE if nivel in ["Intermedio", "Avanzado"] else DARK_GRAY,
-            size=12,
-        ),
-        hovertemplate=f"{nivel}: " + "%{x:.0f}%<extra></extra>",
+        textfont=dict(color=WHITE if nivel in ["Intermedio", "Avanzado"] else DARK_GRAY, size=13),
+        hovertemplate=f"{nivel}: {count} personas ({pct:.0f}%)<extra></extra>",
     ))
 fig = go.Figure(data=traces)
 _ = fig.update_layout(
     barmode="stack",
-    legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"),
-    yaxis=dict(autorange="reversed"),
+    legend=dict(orientation="h", y=-0.3, x=0.5, xanchor="center"),
+    yaxis=dict(showticklabels=False),
 )
 _ = fig.update_xaxes(showgrid=False, showticklabels=False, range=[0, 100])
-_ = fig.update_yaxes(showgrid=False)
-hackods_fig(fig, "Nivel de conocimiento: Python, Quarto y GitHub Pages")
+hackods_fig(fig)
 ```
 
-## Row {height=40%} {.tabset}
+### Quarto
 
 ```{python}
-#| title: "Python x Area"
-cross_py = pd.crosstab(df["area"], df["python_nivel"])
-cross_py = cross_py.reindex(columns=nivel_order, fill_value=0)
-area_order_h = cross_py.sum(axis=1).sort_values(ascending=True).index
+#| title: "Nivel de Quarto"
+q_counts = df["quarto_nivel"].value_counts().reindex(nivel_order, fill_value=0)
+q_pcts = q_counts / N * 100
 
-fig = px.imshow(
-    cross_py.loc[area_order_h],
-    color_continuous_scale=HACKODS_SEQ,
-    text_auto=True,
-    aspect="auto",
+traces = []
+for nivel in nivel_order:
+    pct = q_pcts[nivel]
+    count = q_counts[nivel]
+    traces.append(go.Bar(
+        y=["Quarto"],
+        x=[pct],
+        name=nivel,
+        orientation="h",
+        marker_color=LEVEL_COLORS[nivel],
+        text=[f"{nivel}: {pct:.0f}%"],
+        textposition="inside",
+        textfont=dict(color=WHITE if nivel in ["Intermedio", "Avanzado"] else DARK_GRAY, size=13),
+        hovertemplate=f"{nivel}: {count} personas ({pct:.0f}%)<extra></extra>",
+    ))
+fig = go.Figure(data=traces)
+_ = fig.update_layout(
+    barmode="stack",
+    legend=dict(orientation="h", y=-0.3, x=0.5, xanchor="center"),
+    yaxis=dict(showticklabels=False),
 )
-_ = fig.update_xaxes(side="bottom")
-hackods_fig(fig, "Nivel de Python por area de conocimiento")
+_ = fig.update_xaxes(showgrid=False, showticklabels=False, range=[0, 100])
+hackods_fig(fig)
 ```
 
-```{python}
-#| title: "Quarto x Area"
-cross_q = pd.crosstab(df["area"], df["quarto_nivel"])
-cross_q = cross_q.reindex(columns=nivel_order, fill_value=0)
-
-fig = px.imshow(
-    cross_q.loc[area_order_h],
-    color_continuous_scale=HACKODS_SEQ,
-    text_auto=True,
-    aspect="auto",
-)
-_ = fig.update_xaxes(side="bottom")
-hackods_fig(fig, "Nivel de Quarto por area de conocimiento")
-```
+### GitHub Pages
 
 ```{python}
-#| title: "GitHub Pages x Area"
-cross_gh = pd.crosstab(df["area"], df["github_nivel"])
-cross_gh = cross_gh.reindex(columns=nivel_order, fill_value=0)
+#| title: "Nivel de GitHub Pages"
+gh_counts = df["github_nivel"].value_counts().reindex(nivel_order, fill_value=0)
+gh_pcts = gh_counts / N * 100
 
-fig = px.imshow(
-    cross_gh.loc[area_order_h],
-    color_continuous_scale=HACKODS_SEQ,
-    text_auto=True,
-    aspect="auto",
+traces = []
+for nivel in nivel_order:
+    pct = gh_pcts[nivel]
+    count = gh_counts[nivel]
+    traces.append(go.Bar(
+        y=["GitHub Pages"],
+        x=[pct],
+        name=nivel,
+        orientation="h",
+        marker_color=LEVEL_COLORS[nivel],
+        text=[f"{nivel}: {pct:.0f}%"],
+        textposition="inside",
+        textfont=dict(color=WHITE if nivel in ["Intermedio", "Avanzado"] else DARK_GRAY, size=13),
+        hovertemplate=f"{nivel}: {count} personas ({pct:.0f}%)<extra></extra>",
+    ))
+fig = go.Figure(data=traces)
+_ = fig.update_layout(
+    barmode="stack",
+    legend=dict(orientation="h", y=-0.3, x=0.5, xanchor="center"),
+    yaxis=dict(showticklabels=False),
 )
-_ = fig.update_xaxes(side="bottom")
-hackods_fig(fig, "Nivel de GitHub Pages por area de conocimiento")
+_ = fig.update_xaxes(showgrid=False, showticklabels=False, range=[0, 100])
+hackods_fig(fig)
 ```
 
 # Nuestro planeta
 
-## Row {height=10%}
+## Row {.tabset .fill}
+
+### Totales
 
 ```{python}
 #| content: valuebox
@@ -586,7 +650,7 @@ avg_habitos = np.mean([len(h) for h in habitos_por_persona])
 dict(icon="tree-fill", color="#59BA48", value=f"{avg_habitos:.1f}")
 ```
 
-## Row {height=50%}
+### ODS favoritos
 
 ```{python}
 #| title: "Que ODS nos importa mas?"
@@ -604,89 +668,73 @@ fig = go.Figure(go.Treemap(
     textfont=dict(size=13, color=WHITE),
     hovertemplate="<b>%{label}</b><br>%{value} votos<extra></extra>",
 ))
-hackods_fig(fig, "Que ODS nos importa mas?")
+hackods_fig(fig)
 ```
+
+### Habitos sostenibles
 
 ```{python}
 #| title: "Que hacemos por el planeta?"
 from collections import Counter
 habitos_flat = Counter(all_habitos)
-hab_df = pd.DataFrame(habitos_flat.items(), columns=["habito", "count"]).sort_values("count")
+hab_df = pd.DataFrame(habitos_flat.items(), columns=["habito", "count"]).sort_values("count", ascending=False)
 
-fig = go.Figure(go.Bar(
-    y=hab_df["habito"],
-    x=hab_df["count"],
-    orientation="h",
-    marker_color=ODS_BLUE,
-    text=hab_df["count"],
-    textposition="outside",
-    hovertemplate="%{y}: %{x} personas<extra></extra>",
+fig = go.Figure(go.Treemap(
+    labels=hab_df["habito"],
+    parents=[""] * len(hab_df),
+    values=hab_df["count"],
+    marker_colors=HACKODS_CAT[:len(hab_df)],
+    textinfo="label+value",
+    textfont=dict(size=13, color=WHITE),
+    hovertemplate="<b>%{label}</b><br>%{value} personas<extra></extra>",
 ))
-_ = fig.update_xaxes(showgrid=False, showticklabels=False)
-_ = fig.update_yaxes(showgrid=False)
-hackods_fig(fig, "Habitos sostenibles de la comunidad")
+hackods_fig(fig)
 ```
 
-## Row {height=35%} {.tabset}
+### Huella de carbono
 
 ```{python}
-#| title: "Huella de carbono"
-carb_counts = df["conciencia_carbono"].value_counts()
-carb_order = ["Si, calculo mi huella", "Tengo una idea general", "He escuchado del tema", "No se que es"]
-carb_counts = carb_counts.reindex(carb_order)
+#| title: "Conoces tu huella de carbono?"
+carb_counts = df["conciencia_carbono"].value_counts().reset_index()
+carb_counts.columns = ["nivel", "count"]
 carb_colors = ["#01579b", "#0a97d9", "#7dd3f7", "#e5e7eb"]
 
-fig = go.Figure(go.Pie(
-    labels=carb_counts.index,
-    values=carb_counts.values,
-    hole=0.5,
-    marker_colors=carb_colors,
-    textinfo="label+percent",
-    textfont=dict(size=12),
-    hovertemplate="%{label}: %{value} personas (%{percent})<extra></extra>",
+fig = go.Figure(go.Treemap(
+    labels=carb_counts["nivel"],
+    parents=[""] * len(carb_counts),
+    values=carb_counts["count"],
+    marker_colors=carb_colors[:len(carb_counts)],
+    textinfo="label+value",
+    textfont=dict(size=13, color=WHITE),
+    hovertemplate="<b>%{label}</b><br>%{value} personas<extra></extra>",
 ))
-_ = fig.add_annotation(text="<b>Conciencia</b><br>CO₂", x=0.5, y=0.5,
-                   font=dict(size=16, family=TITLE_FONT, color=BLACK),
-                   showarrow=False)
-hackods_fig(fig, "Conoces tu huella de carbono?")
+hackods_fig(fig)
 ```
 
+### Acciones climaticas
+
 ```{python}
-#| title: "Acciones climaticas"
-acc_counts = df["accion_climatica"].value_counts().sort_values()
-fig = go.Figure(go.Bar(
-    y=acc_counts.index,
-    x=acc_counts.values,
-    orientation="h",
-    marker_color=ODS_BLUE,
-    text=acc_counts.values,
-    textposition="outside",
-    hovertemplate="%{y}: %{x} personas<extra></extra>",
+#| title: "Que acciones tomamos?"
+acc_counts = df["accion_climatica"].value_counts().reset_index()
+acc_counts.columns = ["accion", "count"]
+
+fig = go.Figure(go.Treemap(
+    labels=acc_counts["accion"],
+    parents=[""] * len(acc_counts),
+    values=acc_counts["count"],
+    marker_colors=HACKODS_CAT[:len(acc_counts)],
+    textinfo="label+value",
+    textfont=dict(size=13, color=WHITE),
+    hovertemplate="<b>%{label}</b><br>%{value} personas<extra></extra>",
 ))
-_ = fig.update_xaxes(showgrid=False, showticklabels=False)
-_ = fig.update_yaxes(showgrid=False)
-hackods_fig(fig, "Acciones climaticas que hemos tomado")
-```
-
-```{python}
-#| title: "ODS x Area"
-cross_ods = pd.crosstab(df["area"], df["ods_favorito"])
-cross_ods.columns = [f"ODS {c}" for c in cross_ods.columns]
-area_order_ods = cross_ods.sum(axis=1).sort_values(ascending=True).index
-
-fig = px.imshow(
-    cross_ods.loc[area_order_ods],
-    color_continuous_scale=HACKODS_SEQ,
-    text_auto=True,
-    aspect="auto",
-)
-_ = fig.update_xaxes(side="bottom", tickangle=45)
-hackods_fig(fig, "Que ODS importa a cada area de conocimiento?")
+hackods_fig(fig)
 ```
 
 # El lado humano
 
-## Row {height=10%}
+## Row {.tabset .fill}
+
+### Totales
 
 ```{python}
 #| content: valuebox
@@ -712,10 +760,10 @@ dict(icon="bug-fill", color="#4CA146", value=df["animal_espiritu"].value_counts(
 dict(icon="lightning-charge-fill", color="#F26A2D", value=df["superpoder"].value_counts().index[0])
 ```
 
-## Row {height=45%}
+### Musica para hackear
 
 ```{python}
-#| title: "Que escuchamos mientras hackeamos?"
+#| title: "Que escuchamos?"
 music_counts = df["genero_musical"].value_counts()
 pull_vals = [0.05 if i == 0 else 0 for i in range(len(music_counts))]
 
@@ -732,11 +780,13 @@ fig = go.Figure(go.Pie(
 _ = fig.add_annotation(text=f"<b>{N}</b><br>playlists", x=0.5, y=0.5,
                    font=dict(size=16, family=TITLE_FONT, color=BLACK),
                    showarrow=False)
-hackods_fig(fig, "Nuestra playlist")
+hackods_fig(fig)
 ```
 
+### Animal espiritu
+
 ```{python}
-#| title: "Tu animal espiritu en reuniones"
+#| title: "Cual es tu animal en reuniones?"
 animal_counts = df["animal_espiritu"].value_counts().sort_values()
 animal_labels = [animal_emojis.get(a, a) for a in animal_counts.index]
 bar_colors = [HACKODS_CAT[i % len(HACKODS_CAT)] for i in range(len(animal_counts))]
@@ -752,13 +802,13 @@ fig = go.Figure(go.Bar(
 ))
 _ = fig.update_xaxes(showgrid=False, showticklabels=False)
 _ = fig.update_yaxes(showgrid=False)
-hackods_fig(fig, "Animal espiritu en reuniones")
+hackods_fig(fig)
 ```
 
-## Row {height=40%} {.tabset}
+### Snacks del hackathon
 
 ```{python}
-#| title: "Snacks"
+#| title: "Que comemos mientras codeamos?"
 snack_counts = df["snack"].value_counts().reset_index()
 snack_counts.columns = ["snack", "count"]
 
@@ -770,11 +820,13 @@ fig = go.Figure(go.Treemap(
     textinfo="label+value",
     hovertemplate="<b>%{label}</b><br>%{value} personas<extra></extra>",
 ))
-hackods_fig(fig, "Snacks del hackathon")
+hackods_fig(fig)
 ```
 
+### Horas de sueno
+
 ```{python}
-#| title: "Horas de sueno"
+#| title: "Cuanto dormimos?"
 fig = go.Figure(go.Histogram(
     x=df["horas_sueno"],
     nbinsx=10,
@@ -791,13 +843,15 @@ _ = fig.add_annotation(text="Zombies", x=1.5, y=0.85, yref="paper",
                    showarrow=False, font=dict(size=11, color=MEDIUM_GRAY))
 _ = fig.add_annotation(text="Duermen como bebes", x=7.5, y=0.85, yref="paper",
                    showarrow=False, font=dict(size=11, color=MEDIUM_GRAY))
-_ = fig.update_xaxes(title_text="Horas de sueno", showgrid=False)
+_ = fig.update_xaxes(title_text="Horas", showgrid=False)
 _ = fig.update_yaxes(title_text="Participantes", showgrid=True, gridcolor="#f3f4f6")
-hackods_fig(fig, "Cuantas horas dormimos durante el hackathon?")
+hackods_fig(fig)
 ```
 
+### Superpoderes
+
 ```{python}
-#| title: "Superpoderes"
+#| title: "Que superpoder querrias?"
 sp_counts = df["superpoder"].value_counts().sort_values()
 fig = go.Figure(go.Bar(
     y=sp_counts.index,
@@ -810,5 +864,5 @@ fig = go.Figure(go.Bar(
 ))
 _ = fig.update_xaxes(showgrid=False, showticklabels=False)
 _ = fig.update_yaxes(showgrid=False)
-hackods_fig(fig, "Si pudieras tener un superpoder para el hackathon...")
+hackods_fig(fig)
 ```
